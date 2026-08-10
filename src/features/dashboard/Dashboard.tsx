@@ -259,19 +259,15 @@ export default function Dashboard({
           <div className="mb-6 rounded-2xl border border-rose-500/[0.16] bg-rose-500/[0.06] p-4 text-sm text-rose-200/78">{controlError || daemonError}</div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-14">
-          <Stat label="舵机模式" value={mode} />
-          <Stat label="运行应用" value={isRunning(app) ? app?.info.name ?? '--' : '无'} />
-          <Stat label="应用状态" value={app?.state ?? 'idle'} />
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="m-0 text-sm font-semibold text-white/65">控制</h2>
+          <span className="text-xs text-white/35">{isRunning(app) ? app?.info.name ?? 'App 运行中' : '无运行应用'}</span>
         </div>
-
-        <h2 className="text-white/[0.16] text-xs font-semibold uppercase tracking-[0.25em] mb-6">功能</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {CARDS.map(card => (
-            <Link key={card.to} to={card.to} className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.1] rounded-[1.5rem] p-6 sm:p-8 group no-underline block min-h-[180px] transition-all duration-200">
-              <div className="inline-flex h-11 min-w-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-semibold text-sky-200/70 mb-5">{card.icon}</div>
-              <h3 className="text-white/70 text-base font-semibold mb-2 group-hover:text-white/90 transition-colors">{card.title}</h3>
-              <p className="text-white/[0.28] text-sm leading-relaxed">{card.desc}</p>
+            <Link key={card.to} to={card.to} aria-label={`${card.title}：${card.desc}`} title={card.desc} className="bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.1] rounded-2xl p-4 group no-underline flex min-h-[108px] flex-col justify-between transition-all duration-200">
+              <div className="inline-flex h-9 min-w-9 w-fit items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-2.5 text-xs font-semibold text-amber-200/70">{card.icon}</div>
+              <h3 className="m-0 text-white/70 text-sm font-semibold group-hover:text-white/90 transition-colors">{card.title}</h3>
             </Link>
           ))}
         </div>
@@ -286,14 +282,5 @@ function StatusLight({ label, ok, value }: { label: string; ok: boolean; value?:
       <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.55)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.45)]'}`} />
       {label}{value ? ` ${value}` : ''}
     </span>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-      <div className="text-white/[0.18] text-xs font-medium uppercase tracking-wider mb-2">{label}</div>
-      <div className="text-white/60 text-xl font-semibold tracking-tight">{value}</div>
-    </div>
   )
 }
