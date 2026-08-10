@@ -1,0 +1,6 @@
+This product includes the Reachy Mini passive-joint WebAssembly module from
+Pollen Robotics' reachy-mini-desktop-app project, used under Apache License 2.0.
+The bundled copy is integrated behind Zebao's simulation state adapter; the
+generated WebAssembly and JavaScript bindings are otherwise unmodified.
+
+Copyright 2025 Pollen Robotics

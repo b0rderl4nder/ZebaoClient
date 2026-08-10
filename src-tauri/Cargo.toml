@@ -1,0 +1,12 @@
+[package]
+name = "zebao-client-desktop"
+version = "0.2.0"
+description = "泽宝桌面控制与物理仿真"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }

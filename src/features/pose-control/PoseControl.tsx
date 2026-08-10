@@ -5,7 +5,6 @@ import type { HeadPose } from '../../api/types'
 import { getBasicPoses, gotoPose, playGoToSleep, playWakeUp, releaseMovementManualHold, requestMovementManualHold, saveBasicPose, syncConversationStartupPosture } from '../../api/move'
 import type { BasicPoseConfig } from '../../api/move'
 import { connectSetTargetWs, getFullState } from '../../api/state'
-import SimulatedRobotPreview from '../simulation/SimulatedRobotPreview'
 
 const uiPitchToDaemon = (pitch: number) => -pitch
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
@@ -507,10 +506,6 @@ export default function PoseControl({ simulated = false }: { simulated?: boolean
 
         <div className="grid grid-cols-1 gap-8">
           <div className="space-y-8">
-            {simulated && (
-              <SimulatedRobotPreview yaw={target.yaw} pitch={target.pitch} roll={target.roll} bodyYaw={target.bodyYaw} active={liveMode} />
-            )}
-
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-[1.5rem] p-6">
               <p className="text-white/[0.18] text-xs font-semibold uppercase tracking-[0.2em] mb-5">当前姿态</p>
               <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-8">

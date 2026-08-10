@@ -7,3 +7,4 @@ dist/
 !.env.example
 *.log
 plan.md
+src-tauri/target/

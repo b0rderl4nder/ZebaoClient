@@ -1,26 +1,42 @@
 {
   "name": "zebao-client",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "test": "vitest run",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.10",
+    "@tauri-apps/api": "^2.11.1",
+    "@types/three": "^0.181.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.2"
+    "react-router-dom": "^7.18.2",
+    "three": "^0.181.0",
+    "urdf-loader": "^0.12.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@tauri-apps/cli": "^2.11.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "axe-core": "^4.10.3",
+    "jsdom": "^25.0.1",
     "tailwindcss": "^4.0.0",
     "typescript": "~5.6.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "nanoid": "3.3.18",

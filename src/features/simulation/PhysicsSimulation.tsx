@@ -1,305 +1,185 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import type { DaemonStatus, FullState } from '../../api/types'
+import type { FullState } from '../../api/types'
 import {
   connectPhysicalStateWs,
   connectSimulationTargetWs,
   fetchOfficeMovementStatus,
   fetchSimulationState,
   fetchSimulationStatus,
+  fetchUrdfFingerprint,
   getPhysicalEndpoint,
   getSimulatorEndpoint,
-  savePhysicalEndpoint,
-  saveSimulatorEndpoint,
+  playSimulationPreset,
+  SIMULATION_PRESETS,
   simulationTargetFromState,
   startSimulationBackend,
   stopSimulationBackend,
   type OfficeMovementStatus,
+  type SimulationPresetId,
 } from '../../api/simulation'
-import SimulatedRobotPreview from './SimulatedRobotPreview'
+import { desktopSimulationRunning, isDesktopApp, startDesktopSimulation, stopDesktopSimulation } from '../../api/desktop'
+import Robot3DViewer from './Robot3DViewer'
+import { loadPassiveJointSolver, normalizeKinematicsState, type PassiveJointSolver } from './kinematics/passiveKinematics'
 
-type MirrorStats = {
-  sent: number
-  dropped: number
-  lastFrameAt: number
-}
+type ViewMode = 'mirror' | 'validate' | 'compare'
+type MirrorStats = { sent: number; dropped: number; lastFrameAt: number }
 
-const EMPTY_STATS: MirrorStats = { sent: 0, dropped: 0, lastFrameAt: 0 }
-
-function backendReady(status: DaemonStatus | null): boolean {
+function ready(status: Awaited<ReturnType<typeof fetchSimulationStatus>> | null) {
   return Boolean(status?.state === 'running' || status?.backend_status?.ready || status?.ready)
 }
 
+function delta(a: FullState | null, b: FullState | null) {
+  if (!a?.head_pose || !b?.head_pose) return null
+  const fields = ['x', 'y', 'z', 'roll', 'pitch', 'yaw'] as const
+  return Math.sqrt(fields.reduce((sum, key) => sum + Math.pow(Number(a.head_pose?.[key] || 0) - Number(b.head_pose?.[key] || 0), 2), 0))
+}
+
 export default function PhysicsSimulation() {
-  const [endpoint, setEndpoint] = useState(getSimulatorEndpoint())
-  const [physicalEndpoint, setPhysicalEndpoint] = useState(getPhysicalEndpoint())
-  const [status, setStatus] = useState<DaemonStatus | null>(null)
-  const [simulatorReachable, setSimulatorReachable] = useState(false)
-  const [simState, setSimState] = useState<FullState | null>(null)
+  const simulatorEndpoint = getSimulatorEndpoint()
+  const physicalEndpoint = getPhysicalEndpoint()
+  const desktop = isDesktopApp()
+  const [mode, setMode] = useState<ViewMode>('mirror')
+  const [status, setStatus] = useState<Awaited<ReturnType<typeof fetchSimulationStatus>> | null>(null)
+  const [physicalState, setPhysicalState] = useState<FullState | null>(null)
+  const [simulationState, setSimulationState] = useState<FullState | null>(null)
   const [movement, setMovement] = useState<OfficeMovementStatus | null>(null)
-  const [mirroring, setMirroring] = useState(false)
-  const [stats, setStats] = useState<MirrorStats>(EMPTY_STATS)
-  const [busy, setBusy] = useState<'start' | 'stop' | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const physicalWsRef = useRef<WebSocket | null>(null)
-  const simulationWsRef = useRef<WebSocket | null>(null)
-  const statsRef = useRef<MirrorStats>(EMPTY_STATS)
+  const [stats, setStats] = useState<MirrorStats>({ sent: 0, dropped: 0, lastFrameAt: 0 })
+  const [stateRate, setStateRate] = useState(0)
+  const [message, setMessage] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [activePreset, setActivePreset] = useState<SimulationPresetId | null>(null)
+  const [modelFingerprints, setModelFingerprints] = useState<{ physical: string; simulation: string } | null>(null)
+  const physicalWs = useRef<WebSocket | null>(null)
+  const simulationWs = useRef<WebSocket | null>(null)
+  const rateWindow = useRef({ startedAt: performance.now(), frames: 0 })
+  const passiveSolver = useRef<PassiveJointSolver | null>(null)
+  const presetController = useRef<AbortController | null>(null)
+
+  const recordPhysicalFrame = () => {
+    const current = rateWindow.current
+    current.frames += 1
+    const elapsed = performance.now() - current.startedAt
+    if (elapsed >= 1000) {
+      setStateRate(current.frames * 1000 / elapsed)
+      rateWindow.current = { startedAt: performance.now(), frames: 0 }
+    }
+  }
 
   const stopMirror = useCallback(() => {
-    physicalWsRef.current?.close()
-    simulationWsRef.current?.close()
-    physicalWsRef.current = null
-    simulationWsRef.current = null
-    setMirroring(false)
+    physicalWs.current?.close(); simulationWs.current?.close()
+    physicalWs.current = null; simulationWs.current = null
   }, [])
 
   const poll = useCallback(async () => {
-    try {
-      const nextStatus = await fetchSimulationStatus()
-      setStatus(nextStatus)
-      setSimulatorReachable(true)
-      if (backendReady(nextStatus)) {
-        fetchSimulationState().then(setSimState).catch(() => {})
-      }
-    } catch {
-      setSimulatorReachable(false)
-      setStatus(null)
-      setSimState(null)
-      stopMirror()
-    }
+    fetchSimulationStatus().then(setStatus).catch(() => setStatus(null))
+    fetchSimulationState().then(payload => setSimulationState(normalizeKinematicsState(payload, passiveSolver.current))).catch(() => setSimulationState(null))
     fetchOfficeMovementStatus(physicalEndpoint).then(setMovement).catch(() => setMovement(null))
-  }, [physicalEndpoint, stopMirror])
+  }, [physicalEndpoint])
 
   useEffect(() => {
+    void loadPassiveJointSolver().then(solver => { passiveSolver.current = solver }).catch(() => { passiveSolver.current = null })
     void poll()
-    const timer = window.setInterval(() => void poll(), 2000)
-    return () => {
-      window.clearInterval(timer)
-      stopMirror()
-    }
-  }, [poll, stopMirror])
+    const stateSocket = connectPhysicalStateWs(physicalEndpoint, 20)
+    physicalWs.current = stateSocket
+    stateSocket.onmessage = event => { try { setPhysicalState(normalizeKinematicsState(JSON.parse(String(event.data)), passiveSolver.current)); recordPhysicalFrame() } catch { /* ignore malformed frame */ } }
+    const timer = window.setInterval(() => void poll(), 1500)
+    void Promise.all([fetchUrdfFingerprint(physicalEndpoint), fetchUrdfFingerprint(simulatorEndpoint)])
+      .then(([physical, simulation]) => setModelFingerprints({ physical, simulation }))
+      .catch(() => setModelFingerprints(null))
+    return () => { window.clearInterval(timer); stateSocket.close(); presetController.current?.abort(); stopMirror() }
+  }, [physicalEndpoint, poll, simulatorEndpoint, stopMirror])
 
-  const startMirror = () => {
-    setError(null)
-    setMessage(null)
-    if (!backendReady(status)) {
-      setError('请先启动 MuJoCo 物理 backend。')
-      return
-    }
-    stopMirror()
-    const physical = connectPhysicalStateWs(physicalEndpoint, 20)
-    const simulation = connectSimulationTargetWs()
-    physicalWsRef.current = physical
-    simulationWsRef.current = simulation
-    statsRef.current = EMPTY_STATS
-    setStats(EMPTY_STATS)
-
-    simulation.onopen = () => {
-      if (physical.readyState === WebSocket.OPEN) setMirroring(true)
-    }
-    physical.onopen = () => {
-      if (simulation.readyState === WebSocket.OPEN) setMirroring(true)
-    }
-    physical.onmessage = event => {
-      try {
-        const state = JSON.parse(String(event.data)) as FullState
-        const target = simulationTargetFromState(state)
-        if (!target || simulation.readyState !== WebSocket.OPEN) {
-          statsRef.current = { ...statsRef.current, dropped: statsRef.current.dropped + 1 }
-        } else {
-          simulation.send(JSON.stringify(target))
-          statsRef.current = {
-            ...statsRef.current,
-            sent: statsRef.current.sent + 1,
-            lastFrameAt: Date.now(),
-          }
-        }
-        if ((statsRef.current.sent + statsRef.current.dropped) % 5 === 0) {
-          setStats({ ...statsRef.current })
-        }
-      } catch {
-        statsRef.current = { ...statsRef.current, dropped: statsRef.current.dropped + 1 }
+  const startPhysics = async () => {
+    setBusy(true); setMessage('')
+    try {
+      if (desktop && !(await desktopSimulationRunning())) await startDesktopSimulation()
+      if (!desktop) throw new Error('网页版只提供实体3D镜像，请使用泽宝桌面端启动MuJoCo。')
+      const deadline = Date.now() + 12000
+      while (Date.now() < deadline) {
+        try { await fetchSimulationStatus(); break } catch { await new Promise(resolve => window.setTimeout(resolve, 350)) }
       }
-    }
-    const fail = () => {
-      setError('物理镜像连接已断开。')
-      stopMirror()
-    }
-    physical.onerror = fail
-    physical.onclose = () => setMirroring(false)
-    simulation.onerror = fail
-    simulation.onclose = () => setMirroring(false)
-  }
-
-  const startBackend = async () => {
-    setBusy('start')
-    setError(null)
-    try {
       await startSimulationBackend()
-      setMessage('MuJoCo backend 已启动，物理窗口会在本机显示。')
       await poll()
-    } catch (startError) {
-      setError(
-        startError instanceof Error
-          ? `启动失败：${startError.message}`
-          : '启动 MuJoCo backend 失败',
-      )
-    } finally {
-      setBusy(null)
-    }
+      setMessage('MuJoCo物理环境已就绪')
+    } catch (reason) {
+      setMessage(reason instanceof Error ? reason.message : 'MuJoCo启动失败')
+    } finally { setBusy(false) }
   }
 
-  const stopBackend = async () => {
-    setBusy('stop')
-    setError(null)
+  const stopPhysics = async () => {
+    setBusy(true); stopMirror()
+    try { await stopSimulationBackend().catch(() => null); await stopDesktopSimulation(); setStatus(null); setSimulationState(null); setMessage('物理环境已关闭') }
+    finally { setBusy(false) }
+  }
+
+  const validateMotion = () => {
+    if (!ready(status)) { setMessage('请先启动MuJoCo'); return }
     stopMirror()
+    const source = connectPhysicalStateWs(physicalEndpoint, 20)
+    const target = connectSimulationTargetWs()
+    physicalWs.current = source; simulationWs.current = target
+    let sent = 0; let dropped = 0
+    source.onmessage = event => {
+      try {
+        const state = normalizeKinematicsState(JSON.parse(String(event.data)), passiveSolver.current)
+        setPhysicalState(state)
+        recordPhysicalFrame()
+        const command = simulationTargetFromState(state)
+        if (command && target.readyState === WebSocket.OPEN) { target.send(JSON.stringify(command)); sent += 1 } else dropped += 1
+      } catch { dropped += 1 }
+      setStats({ sent, dropped, lastFrameAt: Date.now() })
+    }
+    source.onerror = () => setMessage('实体状态连接中断')
+    target.onerror = () => setMessage('MuJoCo状态连接中断')
+    setMessage('正在把实体动作单向送入MuJoCo验证')
+  }
+
+  const validatePreset = async (presetId: SimulationPresetId) => {
+    if (!ready(status)) { setMessage('请先启动MuJoCo'); return }
+    presetController.current?.abort()
+    const controller = new AbortController()
+    presetController.current = controller
+    setActivePreset(presetId)
+    setMessage(`正在仿真回放${SIMULATION_PRESETS[presetId].label}`)
     try {
-      await stopSimulationBackend()
-      setMessage('MuJoCo backend 已停止。')
-      await poll()
-    } catch (stopError) {
-      setError(stopError instanceof Error ? stopError.message : '停止 MuJoCo backend 失败')
+      await playSimulationPreset(presetId, controller.signal)
+      if (!controller.signal.aborted) setMessage(`${SIMULATION_PRESETS[presetId].label}回放完成，未写入实体机器人`)
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        setMessage(error instanceof Error ? error.message : '动作验证失败')
+      }
     } finally {
-      setBusy(null)
+      if (presetController.current === controller) presetController.current = null
+      setActivePreset(null)
+      await poll()
     }
   }
 
-  const applyEndpoint = () => {
-    setEndpoint(saveSimulatorEndpoint(endpoint))
-    setMessage('仿真服务地址已保存。')
-    setError(null)
-    stopMirror()
-    void poll()
-  }
+  const physicsReady = ready(status)
+  const difference = delta(physicalState, simulationState)
+  const conflictCount = Number(movement?.motion_safety?.rejected_count || 0)
+  const modelMismatch = Boolean(modelFingerprints && modelFingerprints.physical !== modelFingerprints.simulation)
+  const warning = modelMismatch || conflictCount > 0 || (difference !== null && difference > .08)
+  const viewerEndpoint = mode === 'mirror' ? physicalEndpoint : simulatorEndpoint
+  const viewerState = mode === 'mirror' ? physicalState : simulationState
 
-  const applyPhysicalEndpoint = () => {
-    setPhysicalEndpoint(savePhysicalEndpoint(physicalEndpoint))
-    setMessage('实体机器人地址已保存。')
-    setError(null)
-    stopMirror()
-  }
-
-  const safety = movement?.motion_safety
-  const safe = Boolean(safety?.ready && (safety.rejected_count ?? 0) === 0)
-  const head = simState?.head_pose
-
-  return (
-    <div className="min-h-screen animate-fade-in">
-      <nav className="sticky top-0 z-50 border-b border-white/[0.05] bg-[#080810]/80 backdrop-blur-2xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:px-10">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-white/85">MuJoCo 物理仿真</h1>
-            <p className="text-xs text-white/[0.24]">官方 Reachy Mini physics backend</p>
-          </div>
-          <Link to="/dashboard" className="text-xs font-semibold text-white/40 no-underline transition hover:text-white/75">返回控制台</Link>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-6xl space-y-6 px-6 py-8 md:px-10 md:py-12">
-        <section className="grid gap-4 md:grid-cols-4">
-          <StatusCard label="本机服务" value={simulatorReachable ? '在线' : '未启动'} ok={simulatorReachable} />
-          <StatusCard label="MuJoCo" value={backendReady(status) ? '物理运行中' : '未运行'} ok={backendReady(status)} />
-          <StatusCard label="实体镜像" value={mirroring ? '20Hz 镜像中' : '未连接'} ok={mirroring} />
-          <StatusCard label="实体安全门" value={safe ? '已接管' : '未确认'} ok={safe} />
-        </section>
-
-        {(error || message) && (
-          <div className={`rounded-2xl border p-4 text-sm ${error ? 'border-rose-400/15 bg-rose-400/[0.06] text-rose-100/75' : 'border-emerald-400/15 bg-emerald-400/[0.06] text-emerald-100/70'}`}>
-            {error || message}
-          </div>
-        )}
-
-        <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[1.75rem] border border-white/[0.07] bg-white/[0.025] p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-white/75">仿真控制</h2>
-            <p className="mt-2 text-sm leading-relaxed text-white/32">
-              本页连接电脑上的独立 MuJoCo daemon。实体姿态只向仿真单向复制，仿真故障不会阻塞或控制实体舵机。
-            </p>
-            <label className="mt-6 block text-xs font-semibold text-white/35">仿真服务地址</label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-              <input value={endpoint} onChange={event => setEndpoint(event.target.value)} className="h-11 flex-1 rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 text-sm text-white/65 outline-none focus:border-sky-300/25" />
-              <button type="button" onClick={applyEndpoint} className="h-11 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 text-xs font-semibold text-white/55 hover:bg-white/[0.08]">保存地址</button>
-            </div>
-            <label className="mt-4 block text-xs font-semibold text-white/35">实体机器人 daemon 地址</label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-              <input value={physicalEndpoint} onChange={event => setPhysicalEndpoint(event.target.value)} className="h-11 flex-1 rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 text-sm text-white/65 outline-none focus:border-sky-300/25" />
-              <button type="button" onClick={applyPhysicalEndpoint} className="h-11 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 text-xs font-semibold text-white/55 hover:bg-white/[0.08]">保存实体地址</button>
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {!backendReady(status) ? (
-                <button type="button" disabled={!simulatorReachable || busy !== null} onClick={() => void startBackend()} className="h-11 rounded-xl border border-emerald-300/15 bg-emerald-300/[0.08] px-5 text-xs font-semibold text-emerald-100/75 disabled:opacity-35">
-                  {busy === 'start' ? '启动中…' : '启动物理仿真'}
-                </button>
-              ) : (
-                <button type="button" disabled={busy !== null} onClick={() => void stopBackend()} className="h-11 rounded-xl border border-amber-300/15 bg-amber-300/[0.08] px-5 text-xs font-semibold text-amber-100/75 disabled:opacity-35">
-                  {busy === 'stop' ? '停止中…' : '停止物理仿真'}
-                </button>
-              )}
-              {!mirroring ? (
-                <button type="button" disabled={!backendReady(status)} onClick={startMirror} className="h-11 rounded-xl border border-sky-300/15 bg-sky-300/[0.08] px-5 text-xs font-semibold text-sky-100/75 disabled:opacity-35">镜像实体机器人</button>
-              ) : (
-                <button type="button" onClick={stopMirror} className="h-11 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 text-xs font-semibold text-white/55">断开镜像</button>
-              )}
-            </div>
-            {!simulatorReachable && (
-              <div className="mt-5 rounded-xl border border-amber-300/10 bg-amber-300/[0.04] p-4 text-xs leading-relaxed text-amber-100/55">
-                本机仿真宿主尚未运行。启动 `zebao_daemon/tools/simulation/start_mujoco_shadow.ps1` 后，本页即可管理 MuJoCo backend。
-              </div>
-            )}
-          </div>
-
-          <SimulatedRobotPreview yaw={head?.yaw} pitch={head?.pitch} roll={head?.roll} bodyYaw={simState?.body_yaw} active={backendReady(status)} physics />
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-2">
-          <DiagnosticPanel title="镜像传输">
-            <Metric label="已发送帧" value={stats.sent} />
-            <Metric label="丢弃帧" value={stats.dropped} warn={stats.dropped > 0} />
-            <Metric label="最新帧" value={stats.lastFrameAt ? `${Math.max(0, Date.now() - stats.lastFrameAt)} ms 前` : '--'} />
-            <Metric label="当前动作层" value={movement?.motion_priority || '--'} />
-            <Metric label="主动作" value={movement?.primary_move?.name || movement?.primary_move?.type || '--'} />
-          </DiagnosticPanel>
-          <DiagnosticPanel title="实体动作安全包络">
-            <Metric label="限速帧" value={safety?.limited_count ?? '--'} warn={(safety?.limited_count ?? 0) > 0} />
-            <Metric label="拒绝帧" value={safety?.rejected_count ?? '--'} warn={(safety?.rejected_count ?? 0) > 0} />
-            <Metric label="当前比例" value={safety?.last_scale === undefined ? '--' : safety.last_scale.toFixed(3)} />
-            <Metric label="最近原因" value={safety?.last_reasons?.join('、') || '无'} />
-            <Metric label="思考让权" value={movement?.thinking_motion?.suppressed_by || '无'} />
-          </DiagnosticPanel>
-        </section>
-      </main>
-    </div>
-  )
-}
-
-function StatusCard({ label, value, ok }: { label: string; value: string; ok: boolean }) {
-  return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-5">
-      <div className="text-xs font-semibold text-white/25">{label}</div>
-      <div className={`mt-2 flex items-center gap-2 text-sm font-semibold ${ok ? 'text-emerald-200/75' : 'text-white/45'}`}>
-        <span className={`h-2 w-2 rounded-full ${ok ? 'bg-emerald-400' : 'bg-white/20'}`} />
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function DiagnosticPanel({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="rounded-[1.5rem] border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6">
-      <h3 className="text-sm font-semibold text-white/65">{title}</h3>
-      <div className="mt-4 divide-y divide-white/[0.05]">{children}</div>
-    </div>
-  )
-}
-
-function Metric({ label, value, warn = false }: { label: string; value: string | number; warn?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-3 text-xs">
-      <span className="text-white/30">{label}</span>
-      <span className={warn ? 'font-semibold text-amber-200/75' : 'font-semibold text-white/60'}>{value}</span>
-    </div>
-  )
+  return <div className="simulation-page">
+    <header className="simulation-header"><div><h1>物理仿真</h1><p>真实模型与MuJoCo安全验证</p></div><div className="simulation-health"><i className={physicsReady ? 'is-online' : ''}/>{physicsReady ? 'MuJoCo运行中' : desktop ? 'MuJoCo未启动' : '网页版'}</div></header>
+    <nav className="simulation-tabs" aria-label="仿真模式">
+      <button className={mode === 'mirror' ? 'is-active' : ''} onClick={() => setMode('mirror')}>实体镜像</button>
+      <button className={mode === 'validate' ? 'is-active' : ''} onClick={() => setMode('validate')}>动作验证</button>
+      <button className={mode === 'compare' ? 'is-active' : ''} onClick={() => setMode('compare')}>差异分析</button>
+    </nav>
+    <section className="simulation-stage">
+      <Robot3DViewer endpoint={viewerEndpoint} state={viewerState} connected={mode === 'mirror' ? Boolean(physicalState) : physicsReady} highlight={warning}/>
+      <aside className="simulation-inspector">
+        <div className="simulation-inspector__status"><span>{mode === 'mirror' ? '实体状态' : mode === 'validate' ? '验证状态' : '差异状态'}</span><strong>{warning ? '需要检查' : viewerState ? '稳定' : '等待数据'}</strong></div>
+        {mode === 'mirror' && <p>只读取实体机器人的真实关节，不会发送任何动作。</p>}
+        {mode === 'validate' && <><p>选择动作在MuJoCo中完整回放，结果不会写回舵机。</p><div className="simulation-presets">{(Object.keys(SIMULATION_PRESETS) as SimulationPresetId[]).map(id => <button key={id} onClick={() => void validatePreset(id)} disabled={!physicsReady || activePreset !== null}>{activePreset === id ? '回放中' : SIMULATION_PRESETS[id].label}</button>)}</div><button className="simulation-secondary" onClick={validateMotion} disabled={!physicsReady || activePreset !== null}>镜像实体动作</button></>}
+        {mode === 'compare' && <div className="difference-list"><div><span>模型一致</span><strong>{modelFingerprints ? modelMismatch ? '不一致' : '一致' : '检查中'}</strong></div><div><span>姿态差异</span><strong>{difference === null ? '—' : difference.toFixed(4)}</strong></div><div><span>状态同步</span><strong>{stateRate ? `${stateRate.toFixed(1)} Hz` : '—'}</strong></div><div><span>物理步频</span><strong>{status?.backend_status?.physics_step_hz ? `${status.backend_status.physics_step_hz} Hz` : '—'}</strong></div><div><span>活动接触</span><strong>{status?.backend_status?.active_contacts ?? '—'}</strong></div><div><span>关节越界</span><strong>{status?.backend_status?.joint_limit_violations ?? '—'}</strong></div><div><span>拒绝帧</span><strong>{conflictCount}</strong></div><div><span>仿真帧</span><strong>{stats.sent}</strong></div><div><span>丢弃帧</span><strong>{stats.dropped}</strong></div></div>}
+        <div className="simulation-controls">{physicsReady ? <button onClick={() => void stopPhysics()} disabled={busy}>关闭物理环境</button> : <button onClick={() => void startPhysics()} disabled={busy || !desktop}>{busy ? '正在启动' : desktop ? '启动MuJoCo' : '请在桌面端启动'}</button>}</div>
+        {message && <div className="simulation-message">{message}</div>}
+      </aside>
+    </section>
+  </div>
 }
