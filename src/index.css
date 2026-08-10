@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #e7a34b;
+  --color-accent-strong: #f1b65e;
+  --animate-fade-in: fade-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #100f0d;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: rgba(251, 247, 239, 0.92);
+  background:
+    radial-gradient(circle at 84% 5%, rgba(231, 163, 75, 0.14), transparent 32rem),
+    radial-gradient(circle at 12% 86%, rgba(117, 82, 47, 0.12), transparent 34rem),
+    linear-gradient(145deg, #100f0d 0%, #171411 50%, #0e0d0b 100%);
+  background-attachment: fixed;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(231, 163, 75, 0.32);
+}
+
+/* 旧页面使用了偏低的不透明度；在不重写功能组件的前提下统一提高可读性。 */
+.text-white\/20 { color: rgba(251, 247, 239, 0.52) !important; }
+.text-white\/30 { color: rgba(251, 247, 239, 0.64) !important; }
+.text-white\/40 { color: rgba(251, 247, 239, 0.7) !important; }
+.text-white\/50 { color: rgba(251, 247, 239, 0.76) !important; }
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+}
+
+.glass-panel {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(255, 246, 229, 0.11), rgba(255, 246, 229, 0.035));
+  border: 1px solid rgba(255, 246, 229, 0.14);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(28px) saturate(1.35);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
+}
+
+.glass-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.16), transparent 38%);
+  opacity: 0.6;
+}
+
+.glass-soft {
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+}
+
+.glass-nav {
+  background: rgba(9, 12, 20, 0.58);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(26px) saturate(1.35);
+  -webkit-backdrop-filter: blur(26px) saturate(1.35);
+}
+
+.liquid-button {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.liquid-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1));
+}
+
+.liquid-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.liquid-input {
+  background: rgba(255, 255, 255, 0.095);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.liquid-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(125, 211, 252, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(56, 189, 248, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #e7a34b;
+  outline-offset: 2px;
+}
+
+.client-shell { min-height: 100vh; display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+.client-shell__sidebar {
+  position: fixed; inset: 0 auto 0 0; z-index: 60; width: 220px; padding: 22px 15px 18px;
+  display: flex; flex-direction: column; gap: 24px; border-right: 1px solid rgba(255,246,229,.1);
+  background: rgba(28, 25, 21, .84); box-shadow: 18px 0 50px rgba(0,0,0,.12);
+  backdrop-filter: blur(22px) saturate(1.18); -webkit-backdrop-filter: blur(22px) saturate(1.18);
+}
+.client-shell__brand { min-height: 48px; display: flex; align-items: center; gap: 11px; padding: 4px 6px; }
+.client-shell__brand > span { width: 39px; height: 39px; display: grid; place-items: center; border: 1px solid rgba(231,163,75,.26); border-radius: 13px; color: #e7a34b; background: rgba(231,163,75,.1); font-weight: 750; }
+.client-shell__brand div { min-width: 0; display: grid; }
+.client-shell__brand strong { color: #fbf7ef; }
+.client-shell__brand small { color: rgba(211,201,187,.48); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-shell__sidebar nav { display: grid; gap: 6px; }
+.client-shell__sidebar nav a { min-height: 46px; display: flex; align-items: center; gap: 11px; padding: 10px 13px; border: 1px solid transparent; border-radius: 13px; color: rgba(232,223,211,.56); text-decoration: none; transition: 160ms ease; }
+.client-shell__sidebar nav a > span:first-child { width: 22px; color: rgba(232,223,211,.36); text-align: center; }
+.client-shell__sidebar nav a:hover { color: #fbf7ef; background: rgba(255,255,255,.035); transform: translateX(2px); }
+.client-shell__sidebar nav a.is-active { color: #fbf7ef; border-color: rgba(231,163,75,.22); background: rgba(231,163,75,.12); }
+.client-shell__sidebar nav a.is-active > span:first-child { color: #e7a34b; }
+.client-shell__sidebar > button { min-height: 44px; margin-top: auto; border: 1px solid rgba(255,246,229,.1); border-radius: 12px; color: rgba(232,223,211,.56); background: rgba(255,255,255,.025); }
+.client-shell__sidebar > button:hover { color: #fbf7ef; border-color: rgba(231,163,75,.24); }
+.client-shell__content { grid-column: 2; min-width: 0; }
+.client-shell__content > * > nav:first-child { display: none; }
+.client-shell__mobile-nav { display: none; }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .client-shell__sidebar, .glass-panel, .glass-soft, .glass-nav { background: #211d18; }
+}
+
+@media (max-width: 820px) {
+  .client-shell { display: block; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .client-shell__sidebar { display: none; }
+  .client-shell__content { min-width: 0; }
+  .client-shell__mobile-nav {
+    position: fixed; z-index: 70; inset: auto 9px calc(9px + env(safe-area-inset-bottom)) 9px; min-height: 62px;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; padding: 6px; border: 1px solid rgba(255,246,229,.12);
+    border-radius: 20px; background: rgba(28,25,21,.9); box-shadow: 0 22px 70px rgba(0,0,0,.42);
+    backdrop-filter: blur(22px) saturate(1.2); -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  }
+  .client-shell__mobile-nav a { min-width: 0; min-height: 50px; display: grid; place-items: center; align-content: center; gap: 1px; border-radius: 14px; color: rgba(232,223,211,.45); text-decoration: none; font-size: 10px; }
+  .client-shell__mobile-nav a > span:first-child { font-size: 16px; line-height: 1.1; }
+  .client-shell__mobile-nav a.is-active { color: #e7a34b; background: rgba(231,163,75,.11); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
