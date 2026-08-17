@@ -8,3 +8,5 @@ dist/
 *.log
 plan.md
 src-tauri/target/
+src-tauri/resources/mujoco-runtime/bin/
+tools/simulation/build/

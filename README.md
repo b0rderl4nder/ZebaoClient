@@ -276,13 +276,18 @@ npm run preview
 
 ### 本机 MuJoCo 影子仿真
 
-先在仓库中的 `zebao_daemon` 目录启动仅监听本机 8002 的仿真宿主：
+Windows 桌面安装包内置版本锁定的 MuJoCo sidecar、启动器和机型清单。进入“MuJoCo 物理仿真”后，桌面端会自动启动仅监听 `127.0.0.1:8002` 的仿真宿主；退出桌面端时统一回收进程，不需要另行下载 daemon 源码或手工运行 PowerShell。
+
+开发安装包前，使用仓库内的构建脚本从已确认版本的 daemon 生成自包含运行目录：
 
 ```powershell
-.\tools\simulation\start_mujoco_shadow.ps1 start
+.\tools\simulation\build_mujoco_runtime.ps1 -DaemonRoot C:\path\to\zebao_daemon -Clean
+npm.cmd run tauri:build
 ```
 
-然后从控制台进入“MuJoCo 物理仿真”。页面可以启动/停止物理 backend，并把指定实体 daemon 的**实测状态**以 20Hz 单向镜像到仿真。仿真不会向实体机器人反向写目标；仿真断开也不会阻塞实体 App。停止宿主使用同一脚本的 `stop` 动作。
+生成的可执行文件写入 `src-tauri/resources/mujoco-runtime/bin/`，由 Tauri 安装包携带。网页版本仍可显示真实 URDF/WebGL 模型和实体镜像，但浏览器不能启动本机物理进程；仿真不可用时页面必须显示明确空状态。
+
+页面可以启动/停止物理 backend，并把指定实体 daemon 的**实测状态**以 20Hz 单向镜像到仿真。仿真不会向实体机器人反向写目标；仿真断开也不会阻塞实体 App。
 
 在 Windows PowerShell 若系统禁止执行 `npm.ps1`，可使用 `npm.cmd run build`；它会继续暴露上述入口问题，而不是绕过它。
 

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "runtime": "reachy-mini-mujoco",
+  "reachy_mini_version": "1.8.0rc1",
+  "mujoco_version": "3.3.0",
+  "host": "127.0.0.1",
+  "default_port": 8002,
+  "entity_writeback": false,
+  "supported_robot_profiles": ["zebao-0", "zebao-1"]
+}
