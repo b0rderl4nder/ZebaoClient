@@ -109,7 +109,7 @@ describe('场景原位配置', () => {
     render(<MemoryRouter><Foundation/></MemoryRouter>)
     expect(screen.getByText('工程工具').closest('details')).not.toHaveAttribute('open')
     fireEvent.change(screen.getByRole('searchbox', { name: '查找设置' }), { target: { value: '呼吸' } })
-    expect(screen.getByRole('link', { name: /呼吸与听声转向/ })).toHaveAttribute('href', 'http://robot.test:7862/#/device/motion')
+    expect(screen.getByRole('link', { name: /呼吸与听声转向/ })).toHaveAttribute('href', '/dashboard/foundation/motion')
     expect(screen.queryByText('提示词')).not.toBeInTheDocument()
   })
   it('请求有超时边界', async () => {

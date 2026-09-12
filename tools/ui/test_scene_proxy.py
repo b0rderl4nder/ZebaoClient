@@ -112,6 +112,22 @@ class SceneProxyTests(unittest.TestCase):
         self.assertEqual(self.request('/api/v1/backend_config', 'GET')[0], 403)
         self.assertEqual(self.request('/api/v1/settings', 'PATCH', b'{}')[0], 403)
 
+    def test_device_settings_contracts_only(self):
+        endpoints = {
+            'GET': ['status', 'daemon/volume', 'daemon/volume/microphone', 'daemon/audio/xvf_microphone_gain', 'idle_breathing', 'sound-localization/settings', 'ambient-vision/observations'],
+            'POST': ['daemon/volume', 'daemon/volume/microphone', 'daemon/audio/xvf_microphone_gain', 'idle_breathing'],
+            'PATCH': ['sound-localization/settings', 'ambient-vision/settings'],
+            'DELETE': ['sound-localization/settings', 'ambient-vision/observations'],
+        }
+        for method, paths in endpoints.items():
+            for path in paths:
+                data = b'{}' if method != 'GET' else None
+                full = '/api/v1/' + path
+                self.assertEqual(self.request(full, method, data)[0], 200)
+                self.assertEqual(Upstream.calls[-1], (method, full, data or b''))
+        for path in ['daemon/move', 'daemon/audio/config/apply', 'debug/mic_capture_asr', 'status']:
+            self.assertEqual(self.request('/api/v1/' + path, 'POST', b'{}')[0], 403)
+
 
 if __name__ == '__main__':
     unittest.main()

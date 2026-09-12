@@ -6,13 +6,13 @@ import { operatorPage } from '../../api/operator'
 const sections = [
   { title: '交互与感知', items: [
     { name: '具身交互', note: '活跃度 · 模仿 · 表达', local: '/dashboard/foundation/interaction', route: '' },
-    { name: '呼吸与听声转向', note: '待机开关 · 转向灵敏度', route: 'device/motion' },
+    { name: '呼吸与听声转向', note: '待机开关 · 转向灵敏度', local: '/dashboard/foundation/motion', route: '' },
     { name: '语音与唤醒', note: '默认链路 · 音色 · 唤醒', local: '/dashboard/foundation/voice', route: '' },
-    { name: '视觉', note: '摄像头 · 环境观察', route: 'device/vision' },
+    { name: '视觉', note: '环境观察 · 主动开口', local: '/dashboard/foundation/vision', route: '' },
     { name: '人员与身份', note: '人脸 · 声纹 · 能力权限', route: 'people' },
   ] },
   { title: '设备与连接', items: [
-    { name: '声音', note: '麦克风 · 音量', route: 'device/sound' },
+    { name: '声音', note: '麦克风 · 音量', local: '/dashboard/foundation/sound', route: '' },
     { name: '网络与物联网', note: 'Wi-Fi · 提供方连接', route: 'device/network' },
     { name: '存储', note: '空间 · 运行数据', route: 'device/storage' },
   ] },

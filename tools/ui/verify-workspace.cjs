@@ -44,6 +44,10 @@ async function main() {
         ['voice', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['voice-edit', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['capability-settings', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['sound', '/dashboard/foundation/sound', 'input[aria-label="扬声器音量滑杆"]'],
+        ['motion', '/dashboard/foundation/motion', 'input[role="switch"]'],
+        ['vision', '/dashboard/foundation/vision', 'input[role="switch"]'],
+        ['motion-parameters', '/dashboard/foundation/motion', 'input[role="switch"]'],
       ]) {
         await page.goto(base + route)
         try { await page.locator(ready).first().waitFor({ timeout: 15000 }) }
@@ -62,9 +66,13 @@ async function main() {
           await page.getByRole('button', { name: /^设置办公室物联网$/ }).click()
           await page.locator('.capability-parameters').scrollIntoViewIfNeeded()
         }
+        if (name === 'motion-parameters') {
+          await page.getByText('转向幅度与响应参数', { exact: true }).click()
+          await page.locator('.settings-parameter').first().scrollIntoViewIfNeeded()
+        }
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
         const violations = await page.evaluate(async () => (await axe.run(document.body, { rules: { region: { enabled: false } } })).violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.target) })))
-        const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }))
+        const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, height: innerHeight, documentHeight: document.documentElement.scrollHeight }))
         const navigationOverlap = await page.evaluate(() => {
           const nav = document.querySelector('.client-shell__mobile-nav')
           const main = document.querySelector('.client-shell__content')
@@ -72,9 +80,14 @@ async function main() {
         })
         if (navigationOverlap) failures.push(`${name}/${width}: navigation covers content`)
         if (dimensions.document > dimensions.viewport) failures.push(`${name}/${width}: horizontal overflow`)
+        if (width <= 820 && dimensions.documentHeight > dimensions.height + 1) failures.push(`${name}/${width}: outer document overflows the mobile scroll container`)
         if (violations.length) failures.push(`${name}/${width}: ${JSON.stringify(violations)}`)
         await page.screenshot({ path: path.join(output, `${name}-${width}.png`), fullPage: true })
         results.push({ name, width, height, dimensions, violations })
+        if (name === 'motion-parameters' && width <= 820) {
+          await page.getByRole('button', { name: '恢复设备推荐值', exact: true }).scrollIntoViewIfNeeded()
+          await page.screenshot({ path: path.join(output, `${name}-bottom-${width}.png`) })
+        }
       }
       await context.close()
     }

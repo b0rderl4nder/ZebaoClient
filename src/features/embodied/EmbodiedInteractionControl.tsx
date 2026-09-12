@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { operatorPage } from '../../api/operator'
 import {
   configureEmbodiedInteraction,
   fetchEmbodiedInteractionStatus,
@@ -110,7 +109,7 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
         <p>{status.available_activity_levels?.find(level => level.id === status.activity_level)?.description}</p>
         <label><span>快速模仿</span><select aria-label="快速模仿" value={status.mimic?.mode || ''} disabled={Boolean(saving)} onChange={event => void save('mimic', { mimic_response_mode: event.target.value })}>{status.mimic?.available_modes?.map(mode => <option key={mode.id} value={mode.id}>{mode.name}</option>)}</select></label>
         <p>仅正对的单人空闲时模仿。此开关适用于整台设备。</p>
-        <a href={operatorPage('device/motion')} target="_blank" rel="noreferrer">呼吸开关与听声转向设置 ↗</a>
+        <Link to="/dashboard/foundation/motion">呼吸开关与听声转向设置 →</Link>
       </div>}
 
       <div className="embodied-control__profiles" role="group" aria-label="场景表达档案">

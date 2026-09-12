@@ -27,6 +27,14 @@ def allowed_scene_request(method: str, path: str) -> bool:
     }
     if pathname in voice_endpoints.get(method, set()):
         return True
+    device_endpoints = {
+        'GET': {'/api/v1/status', '/api/v1/daemon/volume', '/api/v1/daemon/volume/microphone', '/api/v1/daemon/audio/xvf_microphone_gain', '/api/v1/idle_breathing', '/api/v1/sound-localization/settings', '/api/v1/ambient-vision/observations'},
+        'POST': {'/api/v1/daemon/volume', '/api/v1/daemon/volume/microphone', '/api/v1/daemon/audio/xvf_microphone_gain', '/api/v1/idle_breathing'},
+        'PATCH': {'/api/v1/sound-localization/settings', '/api/v1/ambient-vision/settings'},
+        'DELETE': {'/api/v1/sound-localization/settings', '/api/v1/ambient-vision/observations'},
+    }
+    if pathname in device_endpoints.get(method, set()):
+        return True
     if method == 'GET':
         return bool(re.fullmatch(r'/api/v1/ui/scenes/[a-zA-Z0-9_-]+', pathname))
     if method == 'POST':
