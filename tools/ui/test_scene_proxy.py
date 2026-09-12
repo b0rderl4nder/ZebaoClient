@@ -84,6 +84,14 @@ class SceneProxyTests(unittest.TestCase):
         for path in ['/api/v1/operations/logs', '/api/v1/operations/logs?all_entries=false', '/api/v1/acceptance/runs']:
             self.assertEqual(self.request(path, 'DELETE')[0], 403)
 
+    def test_provider_config_cannot_activate_or_write_other_providers(self):
+        for provider in ['local_omni', 'platform_ws', 'cloud_omni', 'aliyun_native_omni']:
+            path = '/api/v1/settings/voice-connections/' + provider
+            self.assertEqual(self.request(path)[0], 200)
+            self.assertEqual(self.request(path, 'PATCH', b'{"revision":"r","values":{}}')[0], 200)
+            self.assertEqual(self.request(path + '/activate', 'POST')[0], 403)
+        self.assertEqual(self.request('/api/v1/settings/voice-connections/unknown', 'PATCH')[0], 403)
+
     def test_template_and_history_use_exact_configuration_endpoints(self):
         for method, path in [('GET', '/api/v1/ui/scene-templates'), ('GET', '/api/v1/scenes/quiet/revisions'), ('POST', '/api/v1/scenes/quiet/revisions/rev_1/restore')]:
             self.assertEqual(self.request(path, method)[0], 200)

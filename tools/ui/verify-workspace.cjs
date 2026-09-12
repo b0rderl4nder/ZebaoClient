@@ -24,6 +24,11 @@ async function main() {
         }
         // Never capture personal memory in screenshot artifacts.
         const pathname = new URL(route.request().url()).pathname
+        if (pathname.startsWith('/operator-api/api/v1/settings/voice-connections/')) {
+          const provider = pathname.split('/').pop()
+          const fields = provider === 'platform_ws' ? [['REACHY_PLATFORM_TERMINAL_WS_URL', '平台地址（模拟）', '连接', 'ws'], ['ASR_BASE_URL', '识别服务（模拟）', '语音识别', 'url'], ['ASR_MODEL', '识别模型（模拟）', '语音识别', 'text'], ['INTENT_MODEL', '意图模型（模拟）', '意图识别', 'text'], ['TTS_BASE_URL', '合成地址（模拟）', '语音合成', 'url']] : [[`${provider.toUpperCase()}_WS_URL`, '服务地址（模拟）', '连接', 'ws'], [`${provider.toUpperCase()}_MODEL`, '模型名称（模拟）', '连接', 'text']]
+          return route.fulfill({ json: { ok: true, provider, revision: 'fixture-revision', persistent: true, pending_restart: false, apply_mode: 'app_restart', fields: fields.map(([id,label,group,kind]) => ({ id,label,group,kind,value: kind === 'ws' ? 'ws://fixture.invalid/stream' : kind === 'url' ? 'http://fixture.invalid/api' : 'fixture-model', configured: true })) } })
+        }
         if (pathname === '/operator-api/api/v1/operations/logs') return route.fulfill({ json: { ok: true, entries: [{ id: 2, timestamp_utc: '2026-09-12T01:00:00Z', level: 'warning', category: 'service', summary: '服务连接暂时中断，正在恢复（模拟事件）', stage: 'reconnecting', latency_ms: 350, details: { reason: 'connection_interrupted' } }, { id: 1, timestamp_utc: '2026-09-12T00:59:00Z', level: 'info', category: 'tool', summary: '展示资料已更新（模拟事件）', stage: 'completed', latency_ms: 120 }], has_more: false, next_before_id: null, total_matching: 2 } })
         if (pathname === '/operator-api/api/v1/debug/diagnostic_snapshot') return route.fulfill({ json: { ok: false, captured_at_utc: '2026-09-12T01:00:00Z', failed_checks: ['模拟兼容服务未连接'], self_check: { checks: [{ name: '模拟兼容服务', ok: false }] } } })
         if (pathname === '/operator-api/api/v1/acceptance/runs') return route.fulfill({ json: { ok: true, count: 1, stages: [{ id: 'voice', label: '语音（模拟记录）' }, { id: 'tools', label: '能力执行（模拟记录）' }], runs: [{ run_id: 'fixture', recorded_at: '2026-09-12T01:00:00Z', passed: false, scene: { id: '模拟场景', generation: 'fixture-generation' }, release: { git_commit: 'fixture-commit', artifact_sha256: 'fixture-sha256' }, voice_mode: 'aliyun_native_omni', stages: { voice: true, tools: false }, capability_results: [{ capability_id: '模拟展示能力', ok: false, status: '尚未确认', provider: 'fixture' }], device_results: [], display_revision: 'fixture-revision', latency_ms: { first_audio: 1200 } }] } })
@@ -72,6 +77,10 @@ async function main() {
         ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
         ['voice', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['voice-edit', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
+        ['voice-wake', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
+        ['voice-local-fixture', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
+        ['voice-platform-fixture', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
+        ['voice-compatible-fixture', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['capability-settings', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['sound', '/dashboard/foundation/sound', 'input[aria-label="扬声器音量滑杆"]'],
         ['motion', '/dashboard/foundation/motion', 'input[role="switch"]'],
@@ -118,8 +127,20 @@ async function main() {
           await page.locator('.scene-history').scrollIntoViewIfNeeded()
         }
         if (name === 'voice-edit') {
+          await page.getByRole('button', { name: '连接参数', exact: true }).click()
           await page.getByRole('button', { name: '编辑连接与音色', exact: true }).click()
           await page.locator('.settings-fields').scrollIntoViewIfNeeded()
+        }
+        if (['voice-local-fixture', 'voice-platform-fixture', 'voice-compatible-fixture'].includes(name)) {
+          await page.getByRole('button', { name: '连接参数', exact: true }).click()
+          await page.getByLabel('要配置的链路').selectOption(name === 'voice-local-fixture' ? 'local_omni' : name === 'voice-platform-fixture' ? 'platform_ws' : 'cloud_omni')
+          await page.getByRole('button', { name: '编辑所选连接', exact: true }).click()
+          if (name === 'voice-platform-fixture') await page.getByText('语音识别', { exact: true }).click()
+          await page.locator('[aria-label="所选链路连接设置"]').scrollIntoViewIfNeeded()
+        }
+        if (name === 'voice-wake') {
+          await page.getByRole('button', { name: '唤醒设置', exact: true }).click()
+          await page.getByRole('switch', { name: '启用本地唤醒' }).waitFor()
         }
         if (name === 'capability-settings') {
           await page.getByRole('button', { name: /^设置办公室物联网$/ }).click()

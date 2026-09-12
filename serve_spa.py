@@ -20,6 +20,8 @@ MAX_BODY = 1024 * 1024
 def allowed_scene_request(method: str, path: str) -> bool:
     """Fixed local upstream and explicitly supported configuration contracts."""
     pathname = urlparse(path).path
+    if method in ('GET', 'PATCH') and re.fullmatch(r'/api/v1/settings/voice-connections/(local_omni|platform_ws|cloud_omni|aliyun_native_omni)', pathname):
+        return True
     if method == 'GET' and pathname in ('/api/v1/operations/logs', '/api/v1/acceptance/runs', '/api/v1/debug/diagnostic_snapshot'):
         return True
     if method == 'DELETE' and path == '/api/v1/operations/logs?all_entries=true':

@@ -48,3 +48,10 @@
   .settings-facts { grid-template-columns: 1fr; }
   .settings-actions { flex-wrap: wrap; }
 }
+.settings-profile-picker { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.settings-profile-picker select { padding:10px 12px; min-height:44px; max-width:100%; background:#191815; color:#eee7dd; border:1px solid #51483b; border-radius:10px; }
+.settings-connection-group { padding:12px 0; border-bottom:1px solid #39342d; }
+.settings-connection-group > summary { min-height:44px; cursor:pointer; padding:10px 0; }
+.voice-settings-tabs { display:flex; gap:8px; margin:20px 0; border-bottom:1px solid #39342d; padding-bottom:12px; }
+.voice-settings-tabs button { flex:1; min-height:44px; padding:10px 8px; }
+.voice-settings-tabs button[aria-pressed=true] { border-color:#d3a45c; color:#efb760; background:#2a241a; }

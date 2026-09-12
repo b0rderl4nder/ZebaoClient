@@ -22,6 +22,11 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
     const payload = await response.json().catch(() => null)
     if (!response.ok || !payload || payload.ok === false && !allowUnhealthySnapshot) {
       const reasons: Record<string, string> = {
+        voice_connection_conflict: '配置已被其他页面修改，请重新读取后再保存。',
+        voice_connection_url_invalid: '服务地址格式不正确，请检查协议和主机名。',
+        voice_connection_value_invalid: '配置值无效，不支持换行或环境变量占位符。',
+        voice_connection_field_invalid: '此字段不属于所选链路，未保存。',
+        voice_connection_save_failed: '配置未能持久保存，请检查设备存储。',
         scene_not_found: '此场景已不存在，请重新读取场景列表。',
         scene_revision_not_found: '这个历史版本已不可用，请重新读取历史。',
         last_scene_cannot_delete: '至少需要保留一个场景，请先创建替代场景。',
