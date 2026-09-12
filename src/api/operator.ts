@@ -7,7 +7,7 @@ export function operatorPage(route: string) {
   return appUrl(OPERATOR_APP_PORT, `/#/${route.replace(/^[/#]+/, '')}`)
 }
 
-export async function operatorRequest<T>(path: string, init: RequestInit = {}, sceneConfig = false, timeoutMs = 8000): Promise<T> {
+export async function operatorRequest<T>(path: string, init: RequestInit = {}, sceneConfig = false, timeoutMs = 8000, allowUnhealthySnapshot = false): Promise<T> {
   const controller = new AbortController()
   const abort = () => controller.abort()
   if (init.signal?.aborted) abort()
@@ -20,7 +20,7 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
       signal: controller.signal,
     })
     const payload = await response.json().catch(() => null)
-    if (!response.ok || !payload || payload.ok === false) {
+    if (!response.ok || !payload || payload.ok === false && !allowUnhealthySnapshot) {
       const reasons: Record<string, string> = {
         scene_not_found: '此场景已不存在，请重新读取场景列表。',
         scene_revision_not_found: '这个历史版本已不可用，请重新读取历史。',

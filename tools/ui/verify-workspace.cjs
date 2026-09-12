@@ -23,6 +23,10 @@ async function main() {
           return route.abort()
         }
         // Never capture personal memory in screenshot artifacts.
+        const pathname = new URL(route.request().url()).pathname
+        if (pathname === '/operator-api/api/v1/operations/logs') return route.fulfill({ json: { ok: true, entries: [{ id: 2, timestamp_utc: '2026-09-12T01:00:00Z', level: 'warning', category: 'service', summary: '服务连接暂时中断，正在恢复（模拟事件）', stage: 'reconnecting', latency_ms: 350, details: { reason: 'connection_interrupted' } }, { id: 1, timestamp_utc: '2026-09-12T00:59:00Z', level: 'info', category: 'tool', summary: '展示资料已更新（模拟事件）', stage: 'completed', latency_ms: 120 }], has_more: false, next_before_id: null, total_matching: 2 } })
+        if (pathname === '/operator-api/api/v1/debug/diagnostic_snapshot') return route.fulfill({ json: { ok: false, captured_at_utc: '2026-09-12T01:00:00Z', failed_checks: ['模拟兼容服务未连接'], self_check: { checks: [{ name: '模拟兼容服务', ok: false }] } } })
+        if (pathname === '/operator-api/api/v1/acceptance/runs') return route.fulfill({ json: { ok: true, count: 1, stages: [{ id: 'voice', label: '语音（模拟记录）' }, { id: 'tools', label: '能力执行（模拟记录）' }], runs: [{ run_id: 'fixture', recorded_at: '2026-09-12T01:00:00Z', passed: false, scene: { id: '模拟场景', generation: 'fixture-generation' }, release: { git_commit: 'fixture-commit', artifact_sha256: 'fixture-sha256' }, voice_mode: 'aliyun_native_omni', stages: { voice: true, tools: false }, capability_results: [{ capability_id: '模拟展示能力', ok: false, status: '尚未确认', provider: 'fixture' }], device_results: [], display_revision: 'fixture-revision', latency_ms: { first_audio: 1200 } }] } })
         if (new URL(route.request().url()).pathname === '/operator-api/api/v1/memory') return route.fulfill({ json: { facts: [{ id: 'fixture-1', text: '验收示例记忆（模拟）', createdAt: '' }] } })
         // Prompt bodies can contain administrator content. Render a declared fixture instead.
         if (new URL(route.request().url()).pathname === '/operator-api/api/v1/prompts') {
@@ -49,6 +53,12 @@ async function main() {
         ['scene-create', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-history', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['foundation', '/dashboard/foundation', '[aria-label="查找设置"], input[type="search"]'],
+        ['logs-fixture', '/dashboard/foundation/logs', '[aria-label="运行日志时间轴"]'],
+        ['logs-detail-fixture', '/dashboard/foundation/logs', '[aria-label="运行日志时间轴"]'],
+        ['pipeline', '/dashboard/foundation/pipeline', '.diagnostic-facts'],
+        ['pipeline-extended-fixture', '/dashboard/foundation/pipeline', '.diagnostic-facts'],
+        ['acceptance-fixture', '/dashboard/foundation/acceptance', '[aria-label="验收运行记录"]'],
+        ['acceptance-detail-fixture', '/dashboard/foundation/acceptance', '[aria-label="验收运行记录"]'],
         ['capabilities-global', '/dashboard/foundation/capabilities', '.catalog-list'],
         ['capabilities-detail', '/dashboard/foundation/capabilities', '.catalog-list'],
         ['capabilities-scene', '/dashboard/foundation/capabilities', '.catalog-list'],
@@ -87,6 +97,12 @@ async function main() {
           throw error
         }
         if (name === 'scene-profiles') await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+        if (name === 'logs-detail-fixture' || name === 'acceptance-detail-fixture') await page.locator('.diagnostic-list > details > summary').first().click()
+        if (name === 'pipeline-extended-fixture') {
+          await page.getByText('兼容链路完整诊断', { exact: true }).click()
+          await page.getByRole('button', { name: '读取完整诊断', exact: true }).click()
+          await page.getByText('模拟兼容服务未连接', { exact: true }).waitFor()
+        }
         if (name === 'capabilities-detail') await page.locator('.catalog-list > details > summary').first().click()
         if (name === 'capabilities-scene') await page.getByRole('button', { name: '场景能力', exact: true }).click()
         if (name === 'capabilities-deleted') await page.getByRole('button', { name: '已删除', exact: true }).click()

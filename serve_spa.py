@@ -20,6 +20,10 @@ MAX_BODY = 1024 * 1024
 def allowed_scene_request(method: str, path: str) -> bool:
     """Fixed local upstream and explicitly supported configuration contracts."""
     pathname = urlparse(path).path
+    if method == 'GET' and pathname in ('/api/v1/operations/logs', '/api/v1/acceptance/runs', '/api/v1/debug/diagnostic_snapshot'):
+        return True
+    if method == 'DELETE' and path == '/api/v1/operations/logs?all_entries=true':
+        return True
     if method == 'GET' and pathname == '/api/v1/prompts':
         return True
     if method == 'POST' and re.fullmatch(r'/api/v1/prompts/[a-zA-Z0-9_.-]+/(variants|activate)', pathname):
@@ -152,6 +156,8 @@ class SPARequestHandler(SimpleHTTPRequestHandler):
                 # Device capture and remote validation have bounded existing API durations.
                 pathname = urlparse(path).path
                 timeout = 40 if pathname == '/api/v1/voiceprints/register' else 22 if pathname == '/api/v1/debug/mic_capture_asr' else 12 if pathname in ('/api/v1/people/import-candidates', '/api/v1/people/import') else 7
+                if pathname == '/api/v1/debug/diagnostic_snapshot':
+                    timeout = 18
                 if pathname.startswith('/api/v1/network/') or pathname.startswith('/api/v1/home-assistant'):
                     timeout = 25
                 response = opener.open(request, timeout=timeout)

@@ -76,6 +76,14 @@ class SceneProxyTests(unittest.TestCase):
             self.assertEqual(code, 200)
             self.assertEqual(Upstream.calls[-1], (method, path, data or b''))
 
+    def test_diagnostics_only_exposes_read_and_explicit_log_clear(self):
+        for path in ['/api/v1/operations/logs?limit=50&category=service', '/api/v1/acceptance/runs', '/api/v1/debug/diagnostic_snapshot?limit=10']:
+            self.assertEqual(self.request(path)[0], 200)
+            self.assertEqual(self.request(path, 'POST')[0], 403)
+        self.assertEqual(self.request('/api/v1/operations/logs?all_entries=true', 'DELETE')[0], 200)
+        for path in ['/api/v1/operations/logs', '/api/v1/operations/logs?all_entries=false', '/api/v1/acceptance/runs']:
+            self.assertEqual(self.request(path, 'DELETE')[0], 403)
+
     def test_template_and_history_use_exact_configuration_endpoints(self):
         for method, path in [('GET', '/api/v1/ui/scene-templates'), ('GET', '/api/v1/scenes/quiet/revisions'), ('POST', '/api/v1/scenes/quiet/revisions/rev_1/restore')]:
             self.assertEqual(self.request(path, method)[0], 200)

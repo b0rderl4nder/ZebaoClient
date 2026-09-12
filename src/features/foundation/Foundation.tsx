@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { operatorPage } from '../../api/operator'
 
 // Navigation to existing configuration owners; this is not a capability catalogue.
 const sections = [
@@ -21,9 +20,9 @@ const sections = [
   ] },
   { title: '工程工具', items: [
     { name: '物理仿真', note: '实体镜像 · 动作验证', local: '/dashboard/simulation', route: '' },
-    { name: '运行日志', note: '事件 · 故障原因', route: 'engineering/logs' },
-    { name: '链路诊断', note: '回合 · 延迟 · 执行结果', route: 'engineering/pipeline' },
-    { name: '验收记录', note: '发布版本 · 真实证据', route: 'engineering/acceptance' },
+    { name: '运行日志', note: '事件 · 故障原因', local: '/dashboard/foundation/logs', route: '' },
+    { name: '链路诊断', note: '回合 · 延迟 · 执行结果', local: '/dashboard/foundation/pipeline', route: '' },
+    { name: '验收记录', note: '发布版本 · 真实证据', local: '/dashboard/foundation/acceptance', route: '' },
     { name: '提示词', note: '用途 · 版本 · 恢复默认', local: '/dashboard/foundation/prompts', route: '' },
   ] },
 ]
@@ -37,8 +36,8 @@ export default function Foundation({ simulated = false }: { simulated?: boolean 
       {simulated && <p className="workspace-empty">连接设备后可打开真实配置。</p>}
       {filtered.map(section => {
         const content = <div className="foundation-list">{section.items.map(item => {
-        const content = <><strong>{item.name}</strong><span>{item.note}</span><i aria-hidden="true">{'local' in item ? '→' : '↗'}</i></>
-        return 'local' in item && item.local ? <Link key={item.name} to={item.local}>{content}</Link> : simulated ? <div key={item.name} aria-disabled="true">{content}</div> : <a key={item.name} href={operatorPage(item.route)} target="_blank" rel="noreferrer">{content}</a>
+        const content = <><strong>{item.name}</strong><span>{item.note}</span><i aria-hidden="true">→</i></>
+        return <Link key={item.name} to={item.local}>{content}</Link>
         })}</div>
         return section.title === '工程工具' ? <details className="foundation-section" key={section.title} open={search.trim() ? true : undefined}><summary>工程工具</summary>{content}</details> : <section className="foundation-section" key={section.title}><h2 className="workspace-section-title">{section.title}</h2>{content}</section>
       })}
