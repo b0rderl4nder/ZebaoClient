@@ -14,3 +14,8 @@
 .catalog-detail p { max-width:65ch; line-height:1.7; color:#c9c2b7; }
 .catalog-links { display:flex; flex-wrap:wrap; align-items:center; gap:18px; margin-top:16px; }
 .catalog-links a { min-height:44px; align-content:center; color:#efb760; }
+.catalog-mounts { margin-top:20px; }
+.catalog-mounts h2 { font-size:14px; font-weight:500; }
+.catalog-mounts nav { display:grid; gap:2px; }
+.catalog-mounts a { min-height:44px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid #39342d; }
+.catalog-mounts small { color:#bfb5a6; }

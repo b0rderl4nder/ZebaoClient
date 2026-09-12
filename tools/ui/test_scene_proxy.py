@@ -39,6 +39,23 @@ class QuietHandler(server.SPARequestHandler):
         pass
 
 
+class EmbodiedConfigurationBoundary(unittest.TestCase):
+    def test_policy_editor_has_no_scene_execution_shortcuts(self):
+        self.assertTrue(server.allowed_scene_request('GET', '/api/v1/ui/interaction-policies'))
+        for method in ('PUT', 'DELETE'):
+            self.assertTrue(server.allowed_scene_request(method, '/api/v1/interaction-policies/custom_rule'))
+        self.assertFalse(server.allowed_scene_request('POST', '/api/v1/interaction-policies/custom_rule'))
+        self.assertFalse(server.allowed_scene_request('PUT', '/api/v1/interaction-policies/custom_rule/activate'))
+        self.assertFalse(server.allowed_scene_request('DELETE', '/api/v1/ui/interaction-policies'))
+
+    def test_only_existing_settings_methods_are_exposed(self):
+        for method in ('GET', 'PATCH'):
+            self.assertTrue(server.allowed_scene_request(method, '/api/v1/embodied-interaction'))
+        for method in ('POST', 'DELETE', 'PUT'):
+            self.assertFalse(server.allowed_scene_request(method, '/api/v1/embodied-interaction'))
+        self.assertFalse(server.allowed_scene_request('POST', '/api/v1/embodied-interaction/action'))
+
+
 class SceneProxyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -175,6 +192,11 @@ class SceneProxyTests(unittest.TestCase):
             self.assertEqual(self.request('/api/v1/' + path, method, b'{}' if method != 'GET' else None)[0], 200)
         for method, path in [('POST', 'home-assistant/control'), ('DELETE', 'network/wifi/a%2fb'), ('POST', 'network/restart'), ('DELETE', 'demo-readiness')]:
             self.assertEqual(self.request('/api/v1/' + path, method, b'{}')[0], 403)
+
+    def test_flow_configuration_catalog_does_not_enable_flow_execution(self):
+        self.assertEqual(self.request('/api/v1/ui/scene-flows', 'GET')[0], 200)
+        for method, path in [('POST', '/api/v1/ui/scene-flows'), ('POST', '/api/v1/scenes/test/flow'), ('POST', '/api/v1/scenes/test/flow/task')]:
+            self.assertEqual(self.request(path, method, b'{}')[0], 403)
 
 
 if __name__ == '__main__':

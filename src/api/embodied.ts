@@ -13,6 +13,8 @@ export interface EmbodiedInteractionStatus {
   ok: boolean
   enabled?: boolean
   activity_level?: string
+  global_activity_level?: string
+  scene_activity_levels?: Record<string, string>
   activity_level_source?: string
   available_activity_levels?: { id: string; name: string; description: string }[]
   mimic?: { mode?: string; available_modes?: { id: string; name: string; description: string }[] }
@@ -55,8 +57,8 @@ export interface EmbodiedInteractionPatch {
   mimic_response_mode?: string
 }
 
-export async function fetchEmbodiedInteractionStatus(): Promise<EmbodiedInteractionStatus> {
-  return operatorRequest('/api/v1/embodied-interaction')
+export async function fetchEmbodiedInteractionStatus(signal?: AbortSignal): Promise<EmbodiedInteractionStatus> {
+  return operatorRequest('/api/v1/embodied-interaction', { signal }, true)
 }
 
 export async function configureEmbodiedInteraction(
@@ -66,5 +68,5 @@ export async function configureEmbodiedInteraction(
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(patch),
-  })
+  }, true)
 }

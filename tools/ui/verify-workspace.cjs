@@ -13,6 +13,7 @@ async function main() {
     await fs.mkdir(output, { recursive: true })
     for (const [width, height] of [[390, 844], [768, 1024], [1280, 720], [1440, 900]]) {
       const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce' })
+      let activeCase = ''
       await context.addInitScript(host => {
         localStorage.setItem('zebao_current_robot', JSON.stringify({ host, port: 8000 }))
         localStorage.removeItem('zebao_simulated_mode')
@@ -24,6 +25,29 @@ async function main() {
         }
         // Never capture personal memory in screenshot artifacts.
         const pathname = new URL(route.request().url()).pathname
+        const policyFixture = activeCase.startsWith('scene-policy-')
+        const policy = { id: 'fixture-policy', name: '兼容交互（模拟规则）', description: '仅验证配置页面，不修改机器人运行规则。', built_in: true, entry_mode: 'wake_or_owner', identity_mode: 'continuation_owner', language_mode: 'mirror_turn', acknowledgement_mode: 'after_admission', interruption_mode: 'confirmed_speaker_or_stop', allow_owned_follow_up: true, require_physical_speech: true, require_attention_gate: false, require_fresh_doa: false, front_sector_degrees: 55 }
+        if (policyFixture && pathname === '/operator-api/api/v1/ui/interaction-policies') {
+          const fields = [{ key: 'name', label: '策略名称', kind: 'text', max_length: 30 }, { key: 'description', label: '说明', kind: 'text', max_length: 160 }]
+          for (const [key, label, options] of [
+            ['entry_mode', '怎样开始交谈', [['wake_or_owner', '唤醒后可续聊'], ['front_walk_up', '前方真人可交谈'], ['explicit_only', '每次明确触发']]],
+            ['language_mode', '回答语言', [['mirror_turn', '跟随本轮语言'], ['fixed_zh', '固定中文'], ['fixed_en', '固定英文']]],
+            ['identity_mode', '身份要求', [['optional', '不要求身份'], ['continuation_owner', '用于区分续聊者'], ['required', '必须确认身份']]],
+            ['acknowledgement_mode', '听见反馈时机', [['after_admission', '准入后'], ['after_final', '终稿确认后'], ['disabled', '不播报反馈']]],
+            ['interruption_mode', '怎样打断', [['confirmed_speaker_or_stop', '确认说话人或明确停止'], ['explicit_stop_only', '仅明确停止']]],
+          ]) fields.push({ key, label, kind: 'select', options: options.map(([value, label]) => ({ value, label })) })
+          for (const [key, label] of [['allow_owned_follow_up', '允许同一说话人续聊'], ['require_physical_speech', '必须有真人语音证据'], ['require_attention_gate', '必须通过注意力检查'], ['require_fresh_doa', '必须有新鲜声源方向']]) fields.push({ key, label, kind: 'boolean', advanced: true })
+          fields.push({ key: 'front_sector_degrees', label: '前向角度范围（度）', kind: 'number', minimum: 15, maximum: 90, advanced: true })
+          return route.fulfill({ json: { ok: true, policies: [policy], defaults: policy, fields, preserved_fields: [] } })
+        }
+        if (policyFixture && /^\/operator-api\/api\/v1\/ui\/scenes\/[^/]+$/.test(pathname)) {
+          const response = await context.request.get(`http://${robot}:7862${pathname.replace('/operator-api', '')}`)
+          const data = await response.json()
+          data.scene = { ...data.scene, interaction_policy_id: policy.id, provider_mounts: { ...data.scene.provider_mounts, voice_profile_id: 'platform_ws', interaction_profile_id: policy.id } }
+          data.interaction_policies = [policy]
+          return route.fulfill({ json: data })
+        }
+        if (pathname === '/operator-api/api/v1/ui/scene-flows') return route.fulfill({ json: { ok: true, flows: [{ id: 'none', name: '不使用流程（模拟目录）', description: '不启用多步骤流程。', stages: [] }, { id: 'fixture-flow', name: '接待流程（模拟目录）', description: '仅验证配置展示，不执行接待动作。', stages: [{ id: 'first', name: '确认需求', goal: '确认当前客户需要的资料（模拟步骤）。', suggested_capabilities: [] }] }] } })
         if (pathname.startsWith('/operator-api/api/v1/settings/voice-connections/')) {
           const provider = pathname.split('/').pop()
           const fields = provider === 'platform_ws' ? [['REACHY_PLATFORM_TERMINAL_WS_URL', '平台地址（模拟）', '连接', 'ws'], ['ASR_BASE_URL', '识别服务（模拟）', '语音识别', 'url'], ['ASR_MODEL', '识别模型（模拟）', '语音识别', 'text'], ['INTENT_MODEL', '意图模型（模拟）', '意图识别', 'text'], ['TTS_BASE_URL', '合成地址（模拟）', '语音合成', 'url']] : [[`${provider.toUpperCase()}_WS_URL`, '服务地址（模拟）', '连接', 'ws'], [`${provider.toUpperCase()}_MODEL`, '模型名称（模拟）', '连接', 'text']]
@@ -52,8 +76,15 @@ async function main() {
       page.on('requestfailed', request => failures.push(`request failed ${new URL(request.url()).pathname}: ${request.failure()?.errorText}`))
       for (const [name, route, ready] of [
         ['overview', '/dashboard', '[aria-label="当前场景运行时"]'],
+        ['scene-flow-fixture', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['capabilities-scene-links', '/dashboard/foundation/capabilities', '.catalog-list'],
+        ['capabilities-to-scene', '/dashboard/foundation/capabilities', '.catalog-list'],
+        ['network-iot-direct', '/dashboard/foundation/network?tab=iot', '.network-tabs'],
         ['scenes', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-profiles', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-embodied-draft', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-policy-view-fixture', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-policy-edit-fixture', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-resources', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-create', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-history', '/dashboard/scenes', '[aria-label="场景配置"]'],
@@ -74,7 +105,7 @@ async function main() {
         ['prompts-detail-fixture', '/dashboard/foundation/prompts?slot=conversation.aliyun_native_omni', '.prompt-editor h2'],
         ['prompts-edit-fixture', '/dashboard/foundation/prompts?slot=conversation.aliyun_native_omni', '.prompt-editor h2'],
         ['prompts-readonly-fixture', '/dashboard/foundation/prompts?slot=platform.dialogue', '.prompt-editor h2'],
-        ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
+        ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="整机默认主动程度"]'],
         ['voice', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['voice-edit', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['voice-wake', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
@@ -98,6 +129,8 @@ async function main() {
         ['network-startup', '/dashboard/foundation/network', '.network-tabs'],
         ['storage', '/dashboard/foundation/storage', '.settings-current'],
       ]) {
+        if (process.env.ZEBAO_UI_CASES && !process.env.ZEBAO_UI_CASES.split(',').includes(name)) continue
+        activeCase = name
         await page.goto(base + route)
         try { await page.locator(ready).first().waitFor({ timeout: 15000 }) }
         catch (error) {
@@ -105,7 +138,65 @@ async function main() {
           console.error(JSON.stringify(failures))
           throw error
         }
-        if (name === 'scene-profiles') await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+        if (name === 'scene-profiles' || name === 'scene-embodied-draft') {
+          await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+          try { await page.getByRole('combobox', { name: '主动程度', exact: true }).waitFor({ timeout: 12000 }) }
+          catch (error) {
+            await page.screenshot({ path: path.join(output, `${name}-${width}-failed.png`), fullPage: true })
+            console.error(JSON.stringify({ failures, alerts: await page.getByRole('alert').allTextContents(), status: await page.getByRole('status').allTextContents() }))
+            throw error
+          }
+        }
+        if (name === 'scene-embodied-draft') {
+          const choice = page.getByRole('combobox', { name: '主动程度', exact: true })
+          const previous = await choice.inputValue()
+          const alternate = await choice.locator('option').evaluateAll((options, value) => options.find(option => !option.disabled && option.value !== value)?.value, previous)
+          if (!alternate) throw new Error('scene activity catalogue has no selectable alternative')
+          await choice.selectOption(alternate)
+          await page.getByRole('button', { name: '能力', exact: true }).click()
+          await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+          if (await choice.inputValue() !== alternate) failures.push(`embodied draft lost on tab change/${width}`)
+          if (!(await page.getByRole('button', { name: '保存', exact: true }).isEnabled())) failures.push(`embodied save not available/${width}`)
+          await page.getByText('这两项影响什么？', { exact: true }).click()
+          await page.locator('[aria-label="场景具身设置"]').scrollIntoViewIfNeeded()
+        }
+        if (name.startsWith('scene-policy-')) {
+          await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+          await page.getByRole('button', { name: /^查看与管理策略/ }).click()
+          await page.getByRole('button', { name: '复制策略', exact: true }).waitFor()
+          if (name === 'scene-policy-edit-fixture') {
+            await page.getByRole('button', { name: '复制策略', exact: true }).click()
+            await page.getByRole('textbox', { name: '策略名称', exact: true }).fill('展厅接待（模拟草稿）')
+            await page.getByText('高级准入检查', { exact: true }).click()
+            await page.locator('[aria-label="策略编辑"]').scrollIntoViewIfNeeded()
+          } else await page.locator('[aria-label="交互策略管理"]').scrollIntoViewIfNeeded()
+        }
+        if (name === 'scene-flow-fixture') {
+          await page.getByRole('button', { name: /^流程配置/ }).click()
+          await page.getByLabel('使用哪个流程').selectOption('fixture-flow')
+          await page.getByText('查看流程步骤', { exact: true }).click()
+          await page.locator('.scene-flow-settings').scrollIntoViewIfNeeded()
+        }
+        if (name === 'capabilities-scene-links' || name === 'capabilities-to-scene') {
+          await page.getByRole('button', { name: '场景能力', exact: true }).click()
+          await page.locator('.catalog-list > details > summary').first().click()
+          const link = page.locator('.catalog-mounts a').first()
+          const target = new URL(await link.getAttribute('href'), base)
+          if (name === 'capabilities-to-scene') {
+            await link.click()
+            await page.locator('.capability-parameters').waitFor()
+            if (new URL(page.url()).searchParams.get('capability') !== target.searchParams.get('capability')) failures.push(`wrong capability target/${width}`)
+            if (new URL(page.url()).searchParams.get('id') !== target.searchParams.get('id')) failures.push(`wrong scene target/${width}`)
+            await page.locator('.capability-parameters').scrollIntoViewIfNeeded()
+          } else {
+            if (await page.locator('.catalog-list a[target="_blank"]').count()) failures.push(`legacy capability link/${width}`)
+            await page.locator('.catalog-mounts').first().scrollIntoViewIfNeeded()
+          }
+        }
+        if (name === 'network-iot-direct') {
+          await page.getByLabel('启用物联网服务').waitFor()
+          if (await page.locator('[aria-label="网络连接"]').count()) failures.push(`unrelated wifi loaded/${width}`)
+        }
         if (name === 'logs-detail-fixture' || name === 'acceptance-detail-fixture') await page.locator('.diagnostic-list > details > summary').first().click()
         if (name === 'pipeline-extended-fixture') {
           await page.getByText('兼容链路完整诊断', { exact: true }).click()
@@ -205,6 +296,9 @@ async function main() {
           await page.screenshot({ path: path.join(output, `${name}-bottom-${width}.png`) })
         }
       }
+      // A short selected run may end while a read-only proxy request is in flight.
+      // Drain handlers before disposing their request context; do not hide failures.
+      await context.unrouteAll({ behavior: 'wait' })
       await context.close()
     }
     await fs.writeFile(path.join(output, 'results.json'), JSON.stringify({ results, failures }, null, 2))

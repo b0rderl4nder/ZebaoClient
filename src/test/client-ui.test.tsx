@@ -51,7 +51,7 @@ describe('桌面控制端信息架构', () => {
 
     expect(screen.getByRole('heading', { name: '具身交互' })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: '已暂停' })).toHaveAttribute('aria-checked', 'false')
-    expect(screen.getByText('表达档案')).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: '场景表达档案' })).not.toBeInTheDocument()
     expect(container.textContent).toContain('统一安全控制')
     expect((await axe.run(container, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
   })

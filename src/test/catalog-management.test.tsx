@@ -5,7 +5,7 @@ import CapabilityCatalog from '../features/foundation/CapabilityCatalog'
 import QuietSettings from '../features/foundation/QuietSettings'
 import MemorySettings from '../features/foundation/MemorySettings'
 import { setBaseUrl } from '../api/client'
-import { setCapabilityEnabled, type CatalogItem } from '../api/capabilityCatalog'
+import { capabilityDestination, sceneCapabilityPath, setCapabilityEnabled, type CatalogItem } from '../api/capabilityCatalog'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 function backend() {
@@ -39,6 +39,22 @@ function backend() {
 const show = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>)
 const writes = (api: ReturnType<typeof backend>) => api.fetch.mock.calls.filter(call => call[1]?.method)
 describe('原 Client 能力、静默与记忆', () => {
+  it('提供方设置进入原 Client，诊断不冒充可编辑配置', () => {
+    const item = { id: 'test', name: '测试' } as CatalogItem
+    expect(capabilityDestination({ ...item, settings_route: '#/settings?section=section-home-assistant' })).toEqual({ path: '/dashboard/foundation/network?tab=iot', label: '物联网连接设置' })
+    expect(capabilityDestination({ ...item, settings_route: '#/pipeline' })?.label).toBe('查看执行诊断')
+    expect(capabilityDestination({ ...item, settings_route: 'https://unknown.test' })).toBeUndefined()
+    expect(sceneCapabilityPath('scene&one', 'tool/one')).toBe('/dashboard/scenes?id=scene%26one&capability=tool%2Fone')
+  })
+  it('能力场景入口携带实际场景与能力，不跳旧后台或自动挂载', async () => {
+    const api = backend(); api.catalog.scenes.push({ id: 'second', name: '第二场景', capabilities: ['business'] })
+    show(<CapabilityCatalog/>); await screen.findByText('可配置能力')
+    fireEvent.click(screen.getByRole('button', { name: '场景能力' })); fireEvent.click(screen.getByText('场景业务'))
+    expect(screen.getByRole('link', { name: /测试场景.*未挂载/ })).toHaveAttribute('href', '/dashboard/scenes?id=test&capability=business')
+    expect(screen.getByRole('link', { name: /第二场景.*已挂载/ })).toHaveAttribute('href', '/dashboard/scenes?id=second&capability=business')
+    expect(screen.getAllByRole('link').every(link => !link.hasAttribute('target'))).toBe(true)
+    expect(writes(api)).toHaveLength(0)
+  })
   it('模拟模式下三种页面均不请求机器人', () => {
     const api = backend(); show(<><CapabilityCatalog simulated/><QuietSettings simulated/><MemorySettings simulated/></>)
     expect(api.fetch).not.toHaveBeenCalled()

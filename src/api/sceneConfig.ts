@@ -1,7 +1,7 @@
 import { operatorRequest } from './operator'
 import { readVoiceDefault } from './voiceSettings'
 
-export interface MountOption { id: string; name: string; requires_capability?: string }
+export interface MountOption { id: string; name: string; requires_capability?: string; provider?: string }
 export interface CapabilitySetting {
   key: string; label: string; kind: string; default: string | number | boolean
   help_text?: string; minimum?: number | null; maximum?: number | null
@@ -25,6 +25,7 @@ export interface SceneDetail {
 const scenePath = (id: string) => `/api/v1/scenes/${encodeURIComponent(id)}`
 export const fetchSceneDetail = async (id: string, signal?: AbortSignal): Promise<SceneDetail> => {
   const detail = await operatorRequest<SceneDetail>(`/api/v1/ui/scenes/${encodeURIComponent(id)}`, { signal }, true)
+  if (detail.scene?.id !== id || !Array.isArray(detail.catalog) || !Array.isArray(detail.interaction_policies)) throw new Error('这个场景的配置未能确认，请重新读取或选择其他场景。')
   // Older UI projections omit this field. Never substitute the effective engine.
   if (!detail.shared_voice_pipeline_provider) {
     const defaults = await readVoiceDefault(signal).catch(() => null)
@@ -41,6 +42,15 @@ export async function saveSceneConfig(scene: SceneConfig) {
   return fetchSceneDetail(scene.id)
 }
 export interface SceneTemplate { id: string; name: string; description: string; mode: 'blank' | 'copy' | 'template'; source_scene_id: string }
+export interface SceneFlowDefinition {
+  id: string; name: string; description: string
+  stages: { id: string; name: string; goal: string; suggested_capabilities: string[] }[]
+}
+export async function fetchSceneFlows(signal?: AbortSignal): Promise<SceneFlowDefinition[]> {
+  const result = await operatorRequest<{ flows: SceneFlowDefinition[] }>('/api/v1/ui/scene-flows', { signal }, true)
+  if (!Array.isArray(result.flows) || result.flows.some(flow => !flow.id || !flow.name || !Array.isArray(flow.stages) || flow.stages.some(stage => !stage.name || !Array.isArray(stage.suggested_capabilities)))) throw new Error('流程目录暂不完整，请检查 App 版本后重试。')
+  return result.flows
+}
 export async function fetchSceneTemplates(signal?: AbortSignal) {
   const result = await operatorRequest<{ templates: SceneTemplate[] }>('/api/v1/ui/scene-templates', { signal }, true)
   if (!Array.isArray(result.templates) || result.templates.some(item => !item.id || !item.name || !['blank', 'copy', 'template'].includes(item.mode))) throw new Error('创建来源暂不完整，请重新读取。')

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { archiveCapability, nativeCapabilitySettings, readCapabilityCatalog, setCapabilityEnabled, type CapabilityCatalog as Catalog, type CatalogItem } from '../../api/capabilityCatalog'
-import { operatorPage } from '../../api/operator'
+import { archiveCapability, capabilityDestination, sceneCapabilityPath, readCapabilityCatalog, setCapabilityEnabled, type CapabilityCatalog as Catalog, type CatalogItem } from '../../api/capabilityCatalog'
 import { useFormNavigationGuard } from '../../hooks/useFormNavigationGuard'
 import { ReadFailure, SettingsPage } from './SettingsControls'
 import './catalog.css'
@@ -39,7 +38,7 @@ export default function CapabilityCatalog({ simulated = false }: { simulated?: b
     <p className="scene-hint">{section === 'scene' ? '这里管理可用目录，进入场景选择挂载和参数。' : section === 'deleted' ? '恢复后核对总开关与场景挂载。' : '设备设置独立控制，场景切换不复制这些配置。'}</p>
     {error && <p role="alert" className="workspace-error">{error}</p>}{notice && <p role="status">{notice}</p>}
     <div className="catalog-list">{items.map(item => {
-      const native = nativeCapabilitySettings(item.id)
+      const destination = capabilityDestination(item)
       const runtime = item.runtime_state
       const deviceControlled = item.product_layer === 'foundation' || Boolean(item.runtime_control)
       const enabled = data.global_enabled.includes(item.id)
@@ -47,9 +46,10 @@ export default function CapabilityCatalog({ simulated = false }: { simulated?: b
         <p>{item.detail || item.description || '由机器人运行组件提供。'}</p>
         {section === 'deleted' ? <button disabled={busy} onClick={() => archive(item, true)}>恢复能力</button> : <>
           {!item.locked && !deviceControlled && <label className="scene-check"><input type="checkbox" checked={enabled} disabled={busy} onChange={event => { const next = event.target.checked; void run(() => setCapabilityEnabled(item.id, next, data), '总开关已保存并回读') }}/><span>允许使用{item.name}</span></label>}
-          <div className="catalog-links">{native ? <Link to={`/dashboard/foundation/${native}`}>配置{item.name} →</Link> : item.settings_route ? <a href={operatorPage(item.settings_route)} target="_blank" rel="noreferrer">高级配置（尚待迁入） ↗</a> : null}
-          {item.scope === 'scene' && !deviceControlled && <Link to="/dashboard/scenes">选择场景与参数 →</Link>}
+          <div className="catalog-links">{destination && <Link to={destination.path}>{destination.label} →</Link>}
           {item.deletable && <button disabled={busy} onClick={() => archive(item, false)}>删除能力</button>}</div>
+          {item.settings_route && !destination && <p className="scene-hint">此提供方的专用设置尚未迁入；不会跳转旧后台。场景参数仍可在下方配置。</p>}
+          {item.scope === 'scene' && !deviceControlled && <div className="catalog-mounts"><h2>场景挂载与参数</h2>{data.scenes.length ? <nav aria-label={`${item.name}的场景设置`}>{data.scenes.map(scene => <Link key={scene.id} to={sceneCapabilityPath(scene.id, item.id)}><span>{scene.name}</span><small>{scene.capabilities.includes(item.id) ? '已挂载 · 配置' : '未挂载 · 添加'} →</small></Link>)}</nav> : <Link to="/dashboard/scenes">先创建场景 →</Link>}</div>}
           {item.examples?.length ? <details className="parameter-help"><summary>使用示例</summary><ul>{item.examples.map(text => <li key={text}>{text}</li>)}</ul></details> : null}
         </>}
       </div></details>

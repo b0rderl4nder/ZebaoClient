@@ -91,12 +91,20 @@
 .scene-profile-fields { display: grid; gap: 18px; padding-top: 12px; }
 .scene-profile-fields a { min-height: 44px; align-content: center; font-size: 13px; }
 .scene-profile-fields .scene-hint { margin: 0; }
+.scene-policy-settings > section { margin-top: 12px; padding: 16px; border: 1px solid #494135; border-radius: 12px; }
+.scene-policy-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.scene-policy-editor { display: grid; gap: 16px; }
+@media(max-width: 600px) { .scene-policy-fields { grid-template-columns: minmax(0, 1fr); } }
 .scene-editor-footer { border-top: 1px solid #3b3730; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .scene-config-page .workspace-primary { background: #302519; border-color: #80613c; color: #f1c78f; }
 .scene-inline-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 18px; align-items: end; padding: 24px; border: 1px solid #79613f; border-radius: 14px; margin-bottom: 20px; }
 .scene-delete { margin: 0 24px 20px; padding: 16px; border: 1px solid #9c635c; border-radius: 10px; display: grid; gap: 14px; }
 .scene-delete p { margin: 0; font-size: 14px; line-height: 1.6; }
 .scene-more { margin-top: 18px; }
+.scene-flow-settings { padding: 18px 24px; border-top: 1px solid #39342d; }
+.scene-flow-settings h2 { font-size: 16px; font-weight: 500; }
+.scene-flow-settings > label { display: grid; gap: 10px; max-width: 520px; margin: 16px 0; }
+.scene-flow-settings li { margin-bottom: 12px; }
 .scene-history { margin-top: 12px; padding: 16px; border: 1px solid #494135; border-radius: 12px; }
 .scene-history-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #39342d; }
 .scene-history-row > div { min-width: 0; overflow-wrap: anywhere; }

@@ -39,3 +39,23 @@ export async function archiveCapability(id: string, restore: boolean) {
 export function nativeCapabilitySettings(id: string): string | undefined {
   return ({ voiceprint_identity: 'people', ambient_vision: 'vision', speaker_tracking: 'motion', living_idle: 'motion', quiet_mode: 'quiet', explicit_memory: 'memory' } as Record<string, string>)[id]
 }
+
+/** Translate configuration destinations, never capability availability or execution. */
+export function capabilityDestination(item: CatalogItem): { path: string; label: string } | undefined {
+  const native = nativeCapabilitySettings(item.id)
+  if (native) return { path: `/dashboard/foundation/${native}`, label: `配置${item.name}` }
+  const routes: Record<string, { path: string; label: string }> = {
+    '#/pipeline': { path: '/dashboard/foundation/pipeline', label: '查看执行诊断' },
+    '#/people': { path: '/dashboard/foundation/people', label: '人员与身份设置' },
+    '#/settings?section=section-ambient-vision': { path: '/dashboard/foundation/vision', label: '视觉设置' },
+    '#/settings?section=section-home-assistant': { path: '/dashboard/foundation/network?tab=iot', label: '物联网连接设置' },
+    '#/settings?section=section-memory': { path: '/dashboard/foundation/memory', label: '管理已保存记忆' },
+    '#/settings?section=section-basic-poses': { path: '/dashboard/control?tab=pose', label: '动作与姿态' },
+    '#/device/motion': { path: '/dashboard/foundation/motion', label: '动作设置' },
+  }
+  return routes[item.settings_route || '']
+}
+
+export function sceneCapabilityPath(sceneId: string, capabilityId: string): string {
+  return `/dashboard/scenes?${new URLSearchParams({ id: sceneId, capability: capabilityId })}`
+}

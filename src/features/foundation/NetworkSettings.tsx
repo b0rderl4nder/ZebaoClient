@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { networkRequest, networkWrite } from '../../api/networkSettings'
 import { useSettingsDocument, type SettingsResource } from '../../hooks/useSettingsDocument'
 import { SettingsPage, ReadFailure, SaveControls, SettingToggle } from './SettingsControls'
@@ -15,7 +16,9 @@ function Autostart() {
   return <section className="settings-section" aria-label="开机启动"><h2>App 开机自启</h2>{state.draft ? <><SettingToggle label="开机后自动启动 App" checked={state.draft.enabled} disabled={state.busy} onChange={enabled => state.setDraft({ enabled })}/><SaveControls {...state}/></> : <ReadFailure {...state}/>}</section>
 }
 export default function NetworkSettings({ simulated = false }: { simulated?: boolean }) {
-  const [tab, setTab] = useState('wifi')
-  const [visited, setVisited] = useState(['wifi'])
-  return <SettingsPage title="网络与连接" simulated={simulated}>{!simulated && <><nav className="network-tabs" aria-label="连接设置">{[['wifi', 'Wi-Fi 与外带'], ['iot', '物联网'], ['startup', '开机启动']].map(([id, label]) => <button key={id} aria-pressed={tab === id} onClick={() => { setVisited(current => [...new Set([...current, id])]); setTab(id) }}>{label}</button>)}</nav>{visited.map(id => <div className="network-pane" key={id} hidden={tab !== id}>{id === 'wifi' ? <WifiSettings/> : id === 'iot' ? <HomeAssistantSettings/> : <Autostart/>}</div>)}</>}</SettingsPage>
+  const [query, setQuery] = useSearchParams()
+  const tab = ['iot', 'startup'].includes(query.get('tab') || '') ? query.get('tab')! : 'wifi'
+  const [visited, setVisited] = useState([tab])
+  const panes = [...new Set([...visited, tab])]
+  return <SettingsPage title="网络与连接" simulated={simulated}>{!simulated && <><nav className="network-tabs" aria-label="连接设置">{[['wifi', 'Wi-Fi 与外带'], ['iot', '物联网'], ['startup', '开机启动']].map(([id, label]) => <button key={id} aria-pressed={tab === id} onClick={() => { setVisited(panes); setQuery({ tab: id }) }}>{label}</button>)}</nav>{panes.map(id => <div className="network-pane" key={id} hidden={tab !== id}>{id === 'wifi' ? <WifiSettings/> : id === 'iot' ? <HomeAssistantSettings/> : <Autostart/>}</div>)}</>}</SettingsPage>
 }

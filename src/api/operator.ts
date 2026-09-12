@@ -2,11 +2,6 @@ import { appUrl } from './client'
 
 export const OPERATOR_APP_PORT = 7862
 
-/** One connection boundary for the scene-owned App, separate from daemon APIs. */
-export function operatorPage(route: string) {
-  return appUrl(OPERATOR_APP_PORT, `/#/${route.replace(/^[/#]+/, '')}`)
-}
-
 export async function operatorRequest<T>(path: string, init: RequestInit = {}, sceneConfig = false, timeoutMs = 8000, allowUnhealthySnapshot = false): Promise<T> {
   const controller = new AbortController()
   const abort = () => controller.abort()
@@ -22,6 +17,13 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
     const payload = await response.json().catch(() => null)
     if (!response.ok || !payload || payload.ok === false && !allowUnhealthySnapshot) {
       const reasons: Record<string, string> = {
+        interaction_policy_in_use: '策略仍被场景或已发布配置引用；先修改引用场景并保存，再删除策略。',
+        built_in_interaction_policy_read_only: '内置策略不能覆盖，请复制后修改。',
+        built_in_interaction_policy_delete_forbidden: '内置策略不能删除。',
+        interaction_policy_not_found: '策略已不存在，请重新读取。',
+        interaction_policy_limit_reached: '自定义策略已达到 24 项，请先删除不再使用的策略。',
+        invalid_interaction_policy_name: '策略名称不能为空，最多 30 个字符。',
+        invalid_interaction_front_sector: '前向角度必须在 15–90 度之间。',
         voice_connection_conflict: '配置已被其他页面修改，请重新读取后再保存。',
         voice_connection_url_invalid: '服务地址格式不正确，请检查协议和主机名。',
         voice_connection_value_invalid: '配置值无效，不支持换行或环境变量占位符。',

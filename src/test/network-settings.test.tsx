@@ -31,6 +31,15 @@ function backend() {
 const show = (component: React.ReactNode) => render(<MemoryRouter>{component}</MemoryRouter>)
 const writes = (api: ReturnType<typeof backend>) => api.fetch.mock.calls.filter(call => call[1]?.method)
 describe('原 Client 网络与存储', () => {
+  it('物联网深链接只打开物联网，不扫描或加载 Wi-Fi', async () => {
+    const api = backend()
+    render(<MemoryRouter initialEntries={['/dashboard/foundation/network?tab=iot']}><NetworkSettings/></MemoryRouter>)
+    await screen.findByLabelText('服务地址')
+    expect(screen.getByRole('button', { name: '物联网' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('link', { name: '配置场景内设备范围 →' })).toHaveAttribute('href', '/dashboard/scenes?capability=office_iot')
+    expect(api.fetch.mock.calls.every(call => call[0].endsWith('home-assistant'))).toBe(true)
+    expect(writes(api)).toHaveLength(0)
+  })
   it('进页只读取网络，不扫描、连接或操作设备；其他组按需读取', async () => {
     const api = backend(); show(<NetworkSettings/>); await screen.findByText('当前连接配置：known-profile')
     expect(writes(api)).toHaveLength(0)
