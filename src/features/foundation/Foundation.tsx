@@ -9,7 +9,7 @@ const sections = [
     { name: '呼吸与听声转向', note: '待机开关 · 转向灵敏度', local: '/dashboard/foundation/motion', route: '' },
     { name: '语音与唤醒', note: '默认链路 · 音色 · 唤醒', local: '/dashboard/foundation/voice', route: '' },
     { name: '视觉', note: '环境观察 · 主动开口', local: '/dashboard/foundation/vision', route: '' },
-    { name: '人员与身份', note: '人脸 · 声纹 · 能力权限', route: 'people' },
+    { name: '人员与身份', note: '人脸 · 声纹 · 能力权限', local: '/dashboard/foundation/people', route: '' },
   ] },
   { title: '设备与连接', items: [
     { name: '声音', note: '麦克风 · 音量', local: '/dashboard/foundation/sound', route: '' },

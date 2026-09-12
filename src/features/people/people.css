@@ -1,0 +1,36 @@
+.people-page .workspace-body { max-width: 1000px; }
+.people-search { display: block; position: relative; margin: 18px 0; max-width: 380px; }
+.people-page input:not([type=checkbox]), .people-page select, .people-page textarea { min-width: 0; width: 100%; min-height: 44px; border: 1px solid #51483b; border-radius: 10px; padding: 10px 12px; color: #eee7dd; background: #191815; }
+.people-directory > a { display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #3b3730; min-height: 88px; padding: 18px 0; }
+.people-directory > a > div { flex: 1; min-width: 0; display: grid; gap: 8px; }
+.people-directory strong { font-weight: 500; overflow-wrap: anywhere; }
+.people-directory small, .people-directory > a > span, .people-page p { color: #b9b1a6; font-size: 13px; line-height: 1.7; }
+.people-import { border: 1px solid #51483b; border-radius: 14px; padding: 22px; margin: 18px 0; }
+.people-import h2 { font-size: 17px; font-weight: 500; margin: 0 0 12px; }
+.people-import label { display: grid; gap: 8px; margin: 12px 0; font-size: 13px; }
+.people-tabs { display: flex; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid #3b3730; }
+.people-page .people-tabs button { border: 0; border-radius: 0; color: #b9b1a6; padding: 14px 4px; }
+.people-page .people-tabs button[aria-pressed=true] { color: #e6aa5e; border-bottom: 2px solid #e6aa5e; }
+.people-fields { margin: 0; padding: 0; border: 0; min-width: 0; }
+.people-wide { grid-column: 1 / -1; }
+.people-preferences, .people-privacy { margin-top: 18px; border-bottom: 1px solid #3b3730; padding: 12px 0; }
+.people-preferences summary, .people-privacy summary { min-height: 44px; align-content: center; cursor: pointer; }
+.people-preferences pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.people-preferences .settings-row > span { color: #b9b1a6; font-size: 12px; }
+.preference-row { display: grid; grid-template-columns: minmax(70px, 1fr) 95px minmax(100px, 2fr) auto; gap: 12px; align-items: center; margin: 12px 0; }
+.preference-row strong { font-weight: 500; overflow-wrap: anywhere; font-size: 13px; }
+.preference-add { display: flex; gap: 12px; margin-top: 18px; }
+.preference-add label { position: relative; flex: 1; }
+.people-credential { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #3b3730; gap: 12px; }
+.people-credential a { min-height: 44px; align-content: center; font-size: 14px; }
+.people-permission { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid #3b3730; }
+.people-permission .settings-toggle { margin: 0; min-height: 52px; }
+.people-permission details { margin: 0; }
+.people-permission details[open] { grid-column: 1 / -1; }
+.people-permission summary { margin-top: 0; }
+.people-page .product-header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+.people-page .product-header > div { min-width: 0; }
+.people-page .product-header h1 { overflow-wrap: anywhere; }
+.people-page .product-header > button { flex-shrink: 0; }
+.people-cooldown { display: grid; gap: 8px; font-size: 13px; max-width: 240px; margin: 24px 0; }
+@media(max-width:600px) { .people-directory > a { gap: 10px; } .preference-row { grid-template-columns: minmax(0,1fr) 100px; } .preference-row > input, .preference-row > textarea, .preference-row > label { grid-column: 1; } .people-import { padding: 16px; } }

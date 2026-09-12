@@ -17,6 +17,8 @@ const VoiceSettings = lazy(() => import('./features/foundation/VoiceSettings'))
 const SoundSettings = lazy(() => import('./features/foundation/SoundSettings'))
 const MotionSettings = lazy(() => import('./features/foundation/MotionSettings'))
 const VisionSettings = lazy(() => import('./features/foundation/VisionSettings'))
+const People = lazy(() => import('./features/people/People'))
+const PersonDetail = lazy(() => import('./features/people/PersonDetail'))
 const EmbodiedInteractionControl = lazy(() => import('./features/embodied/EmbodiedInteractionControl'))
 
 function Page({ children }: { children: React.ReactNode }) {
@@ -70,6 +72,8 @@ export default function App() {
         <Route path="foundation/sound" element={<Page><SoundSettings simulated={simulated}/></Page>} />
         <Route path="foundation/motion" element={<Page><MotionSettings simulated={simulated}/></Page>} />
         <Route path="foundation/vision" element={<Page><VisionSettings simulated={simulated}/></Page>} />
+        <Route path="foundation/people" element={<Page><People simulated={simulated}/></Page>} />
+        <Route path="foundation/people/:id" element={<Page><PersonDetail simulated={simulated}/></Page>} />
         <Route path="foundation/interaction" element={<Page><EmbodiedInteractionControl simulated={simulated}/></Page>} />
         <Route path="pose" element={<Navigate to="/dashboard/control?tab=pose" replace />} />
         <Route path="motions" element={<Navigate to="/dashboard/control?tab=motions" replace />} />

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlparse, parse_qs
 from urllib.request import Request, build_opener, HTTPRedirectHandler, ProxyHandler
 from urllib.error import HTTPError, URLError
 from ipaddress import ip_address
@@ -35,6 +35,29 @@ def allowed_scene_request(method: str, path: str) -> bool:
     }
     if pathname in device_endpoints.get(method, set()):
         return True
+    people_endpoints = {
+        'GET': {'/api/v1/people', '/api/v1/people/import-candidates', '/api/v1/voiceprints/enrollment-prompts'},
+        'POST': {'/api/v1/people', '/api/v1/people/import', '/api/v1/voiceprints/register'},
+    }
+    if pathname in people_endpoints.get(method, set()):
+        return True
+    if method in ('GET', 'PATCH', 'DELETE') and re.fullmatch(r'/api/v1/people/(?!import(?:-candidates)?$)[a-zA-Z0-9_-]+', pathname):
+        return True
+    if method == 'DELETE' and re.fullmatch(r'/api/v1/face-identities/mappings/[^/]+', pathname):
+        name = unquote(pathname.rsplit('/', 1)[1])
+        return bool(name.strip()) and not any(char in name for char in '/\\\r\n') and len(name) <= 80
+    if method == 'POST' and pathname == '/api/v1/debug/mic_capture_asr':
+        # Only explicit UI enrollment/testing; never generic debug recording.
+        query = parse_qs(urlparse(path).query, keep_blank_values=True)
+        purpose = query.get('purpose')
+        expected = {'seconds': ['6'], 'processed': ['1'], 'suppress_handler': ['1']}
+        if purpose == ['voiceprint_enrollment']:
+            expected.update(purpose=purpose, include_pcm=['1'], transcribe=['0'])
+        elif purpose == ['voiceprint_test']:
+            expected.update(purpose=purpose, include_pcm=['0'], transcribe=['1'])
+        else:
+            return False
+        return query == expected
     if method == 'GET':
         return bool(re.fullmatch(r'/api/v1/ui/scenes/[a-zA-Z0-9_-]+', pathname))
     if method == 'POST':
@@ -61,6 +84,11 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class SPARequestHandler(SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        # Person IDs/names in endpoint paths and diagnostic query values stay private.
+        if not getattr(self, 'path', '').startswith('/operator-api/'):
+            super().log_message(format, *args)
+
     def setup(self):
         super().setup()
         self.connection.settimeout(10)
@@ -93,7 +121,10 @@ class SPARequestHandler(SimpleHTTPRequestHandler):
             request = Request(OPERATOR_ORIGIN + path, data=body, method=self.command, headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
             opener = build_opener(ProxyHandler({}), NoRedirect)
             try:
-                response = opener.open(request, timeout=7)
+                # Device capture and remote validation have bounded existing API durations.
+                pathname = urlparse(path).path
+                timeout = 40 if pathname == '/api/v1/voiceprints/register' else 22 if pathname == '/api/v1/debug/mic_capture_asr' else 12 if pathname in ('/api/v1/people/import-candidates', '/api/v1/people/import') else 7
+                response = opener.open(request, timeout=timeout)
             except HTTPError as error:
                 response = error
             with response:

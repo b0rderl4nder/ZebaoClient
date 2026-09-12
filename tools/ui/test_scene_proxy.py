@@ -128,6 +128,14 @@ class SceneProxyTests(unittest.TestCase):
         for path in ['daemon/move', 'daemon/audio/config/apply', 'debug/mic_capture_asr', 'status']:
             self.assertEqual(self.request('/api/v1/' + path, 'POST', b'{}')[0], 403)
 
+    def test_people_and_explicit_voice_capture_only(self):
+        for method, path in [('GET', 'people'), ('POST', 'people'), ('GET', 'people/test-id'), ('PATCH', 'people/test-id'), ('DELETE', 'people/test-id'), ('GET', 'people/import-candidates?provider=compreface'), ('POST', 'people/import'), ('GET', 'voiceprints/enrollment-prompts'), ('POST', 'voiceprints/register'), ('DELETE', 'face-identities/mappings/test')]:
+            self.assertEqual(self.request('/api/v1/' + path, method, b'{}' if method != 'GET' else None)[0], 200)
+        capture = '/api/v1/debug/mic_capture_asr?seconds=6&include_pcm=1&processed=1&transcribe=0&suppress_handler=1&purpose=voiceprint_enrollment'
+        self.assertEqual(self.request(capture, 'POST')[0], 200)
+        for invalid in [capture.replace('seconds=6', 'seconds=60'), capture + '&save=1', capture.replace('purpose=voiceprint_enrollment', 'purpose=debug'), '/api/v1/people/import', '/api/v1/face-identities/mappings/a%2fb']:
+            self.assertEqual(self.request(invalid, 'DELETE' if 'mappings' in invalid or invalid.endswith('/import') else 'POST')[0], 403)
+
 
 if __name__ == '__main__':
     unittest.main()

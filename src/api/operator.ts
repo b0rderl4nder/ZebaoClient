@@ -7,12 +7,12 @@ export function operatorPage(route: string) {
   return appUrl(OPERATOR_APP_PORT, `/#/${route.replace(/^[/#]+/, '')}`)
 }
 
-export async function operatorRequest<T>(path: string, init: RequestInit = {}, sceneConfig = false): Promise<T> {
+export async function operatorRequest<T>(path: string, init: RequestInit = {}, sceneConfig = false, timeoutMs = 8000): Promise<T> {
   const controller = new AbortController()
   const abort = () => controller.abort()
   if (init.signal?.aborted) abort()
   init.signal?.addEventListener('abort', abort, { once: true })
-  const timeout = window.setTimeout(abort, 8000)
+  const timeout = window.setTimeout(abort, Math.min(60000, Math.max(1000, timeoutMs)))
   try {
     const response = await fetch(sceneConfig ? appUrl(5173, `/operator-api${path}`) : appUrl(OPERATOR_APP_PORT, path), {
       ...init,
@@ -22,6 +22,11 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
     const payload = await response.json().catch(() => null)
     if (!response.ok || !payload || payload.ok === false) {
       const reasons: Record<string, string> = {
+        person_name_already_exists: '已有同名人员，请直接编辑或关联已有档案。',
+        person_name_required: '请填写姓名。',
+        person_name_invalid: '这个档案名称不可用，请换一个名称。',
+        person_not_found: '此人员不存在或已删除，请返回列表。',
+        person_permission_invalid: '授权项不可用，请重新读取能力清单。',
         voice_pipeline_busy: '机器人正在交谈，请在空闲时保存链路。',
         cloud_omni_not_configured: '云端兼容链路尚未配置，不能切换。',
         aliyun_native_omni_not_configured: '请先填写云端 Omni 的连接与密钥，再切换。',

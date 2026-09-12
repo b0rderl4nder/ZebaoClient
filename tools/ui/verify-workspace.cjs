@@ -48,6 +48,12 @@ async function main() {
         ['motion', '/dashboard/foundation/motion', 'input[role="switch"]'],
         ['vision', '/dashboard/foundation/vision', 'input[role="switch"]'],
         ['motion-parameters', '/dashboard/foundation/motion', 'input[role="switch"]'],
+        ['people', '/dashboard/foundation/people', '.people-directory a'],
+        ['people-create', '/dashboard/foundation/people', '.people-directory a'],
+        ['person-profile', '/dashboard/foundation/people', '.people-directory a'],
+        ['person-identity', '/dashboard/foundation/people', '.people-directory a'],
+        ['person-greeting', '/dashboard/foundation/people', '.people-directory a'],
+        ['person-enroll', '/dashboard/foundation/people', '.people-directory a'],
       ]) {
         await page.goto(base + route)
         try { await page.locator(ready).first().waitFor({ timeout: 15000 }) }
@@ -69,6 +75,17 @@ async function main() {
         if (name === 'motion-parameters') {
           await page.getByText('转向幅度与响应参数', { exact: true }).click()
           await page.locator('.settings-parameter').first().scrollIntoViewIfNeeded()
+        }
+        if (name === 'people-create') await page.getByRole('button', { name: '添加人员', exact: true }).click()
+        if (name.startsWith('person-')) {
+          await page.locator('.people-directory a').first().click()
+          await page.getByRole('textbox', { name: '姓名', exact: true }).waitFor()
+          if (name === 'person-identity' || name === 'person-enroll') await page.getByRole('button', { name: '身份与权限', exact: true }).click()
+          if (name === 'person-greeting') await page.getByRole('button', { name: '主动协作', exact: true }).click()
+          if (name === 'person-enroll') {
+            await page.getByRole('button', { name: /^(补录|录入)声纹$/ }).click()
+            await page.getByRole('button', { name: '录入当前句', exact: true }).waitFor()
+          }
         }
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
         const violations = await page.evaluate(async () => (await axe.run(document.body, { rules: { region: { enabled: false } } })).violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.target) })))
