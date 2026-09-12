@@ -40,7 +40,28 @@ export async function saveSceneConfig(scene: SceneConfig) {
   await operatorRequest(`${scenePath(scene.id)}/publish`, { method: 'POST' }, true)
   return fetchSceneDetail(scene.id)
 }
-export const createSceneConfig = (name: string, sourceId?: string) => operatorRequest<{ scene_id: string }>('/api/v1/ui/scenes', {
-  method: 'POST', body: JSON.stringify({ scene_id: `scene_${Array.from(crypto.getRandomValues(new Uint32Array(3)), value => value.toString(36)).join('')}`, name, mode: sourceId ? 'copy' : 'blank', ...(sourceId ? { source_scene_id: sourceId } : {}) }),
+export interface SceneTemplate { id: string; name: string; description: string; mode: 'blank' | 'copy' | 'template'; source_scene_id: string }
+export async function fetchSceneTemplates(signal?: AbortSignal) {
+  const result = await operatorRequest<{ templates: SceneTemplate[] }>('/api/v1/ui/scene-templates', { signal }, true)
+  if (!Array.isArray(result.templates) || result.templates.some(item => !item.id || !item.name || !['blank', 'copy', 'template'].includes(item.mode))) throw new Error('创建来源暂不完整，请重新读取。')
+  return result.templates
+}
+export const createSceneConfig = (name: string, sourceId?: string, mode: SceneTemplate['mode'] = sourceId ? 'copy' : 'blank') => operatorRequest<{ scene_id: string }>('/api/v1/ui/scenes', {
+  method: 'POST', body: JSON.stringify({ scene_id: `scene_${Array.from(crypto.getRandomValues(new Uint32Array(3)), value => value.toString(36)).join('')}`, name, mode, ...(sourceId ? { source_scene_id: sourceId } : {}) }),
 }, true)
 export const deleteSceneConfig = (id: string, replacement: string) => operatorRequest(`${scenePath(id)}${replacement ? `?replacement_scene_id=${encodeURIComponent(replacement)}` : ''}`, { method: 'DELETE' }, true)
+
+export interface SceneRevision { revision_id: string; reason: string; name: string; flow_id: string; capability_count: number }
+export async function fetchSceneRevisions(id: string, signal?: AbortSignal) {
+  const result = await operatorRequest<{ scene_id: string; revisions: SceneRevision[] }>(`${scenePath(id)}/revisions`, { signal }, true)
+  if (result.scene_id !== id || !Array.isArray(result.revisions)) throw new Error('历史版本暂不可用，请重新读取。')
+  return result.revisions
+}
+export async function restoreSceneRevision(id: string, revision: SceneRevision) {
+  const result = await operatorRequest<{ scene_restore?: { scene_id: string; revision_id: string; restored: boolean } }>(`${scenePath(id)}/revisions/${encodeURIComponent(revision.revision_id)}/restore`, { method: 'POST' }, true)
+  const receipt = result.scene_restore
+  if (!receipt?.restored || receipt.scene_id !== id || receipt.revision_id !== revision.revision_id) throw new Error('恢复结果未确认，请重新读取；不要重复提交。')
+  const detail = await fetchSceneDetail(id)
+  if (detail.scene.name !== revision.name || detail.scene.flow_id !== revision.flow_id || detail.scene.capabilities.length !== revision.capability_count) throw new Error('恢复后的配置与历史摘要不一致，请重新读取。')
+  return detail
+}

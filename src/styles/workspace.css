@@ -97,6 +97,11 @@
 .scene-delete { margin: 0 24px 20px; padding: 16px; border: 1px solid #9c635c; border-radius: 10px; display: grid; gap: 14px; }
 .scene-delete p { margin: 0; font-size: 14px; line-height: 1.6; }
 .scene-more { margin-top: 18px; }
+.scene-history { margin-top: 12px; padding: 16px; border: 1px solid #494135; border-radius: 12px; }
+.scene-history-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid #39342d; }
+.scene-history-row > div { min-width: 0; overflow-wrap: anywhere; }
+.scene-history-row small { display: block; margin-top: 6px; color: #b9b1a6; }
+.scene-history-row button { flex-shrink: 0; }
 @media(max-width: 1000px) { .scene-workbench { grid-template-columns: 1fr; gap: 16px; } .scene-selector { grid-template-columns: repeat(3, minmax(0, 1fr)); } .scene-selector button { overflow-wrap: anywhere; } }
 @media(max-width: 600px) {
   .scene-editor-heading { padding: 18px; flex-wrap: wrap; gap: 12px; } .scene-editor-heading > label { flex-basis: 100%; }

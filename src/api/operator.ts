@@ -22,6 +22,12 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
     const payload = await response.json().catch(() => null)
     if (!response.ok || !payload || payload.ok === false) {
       const reasons: Record<string, string> = {
+        scene_not_found: '此场景已不存在，请重新读取场景列表。',
+        scene_revision_not_found: '这个历史版本已不可用，请重新读取历史。',
+        last_scene_cannot_delete: '至少需要保留一个场景，请先创建替代场景。',
+        scene_has_agenda_entries: '此场景仍被日程引用，请先解除关联。',
+        replacement_scene_required: '删除当前场景前请选择替代场景。',
+        replacement_scene_not_found: '替代场景不可用，请重新选择。',
         person_name_already_exists: '已有同名人员，请直接编辑或关联已有档案。',
         person_name_required: '请填写姓名。',
         person_name_invalid: '这个档案名称不可用，请换一个名称。',

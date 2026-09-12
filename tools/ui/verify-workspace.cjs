@@ -39,6 +39,8 @@ async function main() {
         ['scenes', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-profiles', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-resources', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-create', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-history', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['foundation', '/dashboard/foundation', '[aria-label="查找设置"], input[type="search"]'],
         ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
         ['voice', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
@@ -69,6 +71,15 @@ async function main() {
         }
         if (name === 'scene-profiles') await page.getByRole('button', { name: '语音与交互', exact: true }).click()
         if (name === 'scene-resources') await page.getByRole('button', { name: '知识与展示', exact: true }).click()
+        if (name === 'scene-create') {
+          await page.getByRole('button', { name: '新建场景', exact: true }).click()
+          await page.getByRole('option', { name: /以.*为模板/ }).first().waitFor({ state: 'attached' })
+        }
+        if (name === 'scene-history') {
+          await page.getByRole('button', { name: /^历史版本/ }).click()
+          await page.getByRole('button', { name: '恢复历史 1', exact: true }).waitFor()
+          await page.locator('.scene-history').scrollIntoViewIfNeeded()
+        }
         if (name === 'voice-edit') {
           await page.getByRole('button', { name: '编辑连接与音色', exact: true }).click()
           await page.locator('.settings-fields').scrollIntoViewIfNeeded()

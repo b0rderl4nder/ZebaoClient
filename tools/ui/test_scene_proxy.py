@@ -76,6 +76,12 @@ class SceneProxyTests(unittest.TestCase):
             self.assertEqual(code, 200)
             self.assertEqual(Upstream.calls[-1], (method, path, data or b''))
 
+    def test_template_and_history_use_exact_configuration_endpoints(self):
+        for method, path in [('GET', '/api/v1/ui/scene-templates'), ('GET', '/api/v1/scenes/quiet/revisions'), ('POST', '/api/v1/scenes/quiet/revisions/rev_1/restore')]:
+            self.assertEqual(self.request(path, method)[0], 200)
+        for path in ['/api/v1/scenes/quiet/revisions/rev%2f1/restore', '/api/v1/scenes/quiet/revisions/rev_1/delete']:
+            self.assertEqual(self.request(path, 'POST')[0], 403)
+
     def test_only_scene_endpoints_and_no_arbitrary_upstream(self):
         for path in ['/api/v1/settings', '/api/move/goto', '//example.com', '/api/v1/scenes/../../settings', '/api/v1/scenes/foo%2fbar']:
             self.assertEqual(self.request(path, 'PUT', b'{}')[0], 403)
