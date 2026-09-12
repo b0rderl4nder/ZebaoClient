@@ -13,6 +13,7 @@ const Conversation = lazy(() => import('./features/conversation/Conversation'))
 const PhysicsSimulation = lazy(() => import('./features/simulation/PhysicsSimulation'))
 const Scenes = lazy(() => import('./features/scenes/Scenes'))
 const Foundation = lazy(() => import('./features/foundation/Foundation'))
+const VoiceSettings = lazy(() => import('./features/foundation/VoiceSettings'))
 const EmbodiedInteractionControl = lazy(() => import('./features/embodied/EmbodiedInteractionControl'))
 
 function Page({ children }: { children: React.ReactNode }) {
@@ -62,6 +63,7 @@ export default function App() {
         <Route path="scenes" element={<Page><Scenes simulated={simulated}/></Page>} />
         <Route path="setup" element={<Navigate to="/dashboard/scenes" replace />} />
         <Route path="foundation" element={<Page><Foundation simulated={simulated}/></Page>} />
+        <Route path="foundation/voice" element={<Page><VoiceSettings simulated={simulated}/></Page>} />
         <Route path="foundation/interaction" element={<Page><EmbodiedInteractionControl simulated={simulated}/></Page>} />
         <Route path="pose" element={<Navigate to="/dashboard/control?tab=pose" replace />} />
         <Route path="motions" element={<Navigate to="/dashboard/control?tab=motions" replace />} />

@@ -1,0 +1,365 @@
+{
+  "results": [
+    {
+      "name": "overview",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "scenes",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-profiles",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-resources",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "foundation",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "interaction",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "voice",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "voice-edit",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "capability-settings",
+      "width": 390,
+      "height": 844,
+      "dimensions": {
+        "viewport": 390,
+        "document": 390
+      },
+      "violations": []
+    },
+    {
+      "name": "overview",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "scenes",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-profiles",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-resources",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "foundation",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "interaction",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "voice",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "voice-edit",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "capability-settings",
+      "width": 768,
+      "height": 1024,
+      "dimensions": {
+        "viewport": 768,
+        "document": 768
+      },
+      "violations": []
+    },
+    {
+      "name": "overview",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "scenes",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-profiles",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-resources",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "foundation",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "interaction",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "voice",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "voice-edit",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "capability-settings",
+      "width": 1280,
+      "height": 720,
+      "dimensions": {
+        "viewport": 1280,
+        "document": 1280
+      },
+      "violations": []
+    },
+    {
+      "name": "overview",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "scenes",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-profiles",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "scene-resources",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "foundation",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "interaction",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "voice",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "voice-edit",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    },
+    {
+      "name": "capability-settings",
+      "width": 1440,
+      "height": 900,
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      },
+      "violations": []
+    }
+  ],
+  "failures": []
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { voiceName } from '../../api/voiceSettings'
 import {
   fetchSceneRuntime,
   type SceneRuntimeSnapshot,
@@ -60,7 +61,7 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
     const requestedCount = Number(runtime?.capability_count)
     return {
       sceneName: compactLabel(runtime?.scene?.name, '场景状态暂不可用'),
-      voice: compactLabel(runtime?.voice?.label || runtime?.voice?.provider, '未挂载'),
+      voice: voiceName(runtime?.voice?.provider, runtime?.voice?.label),
       interaction: compactLabel(runtime?.interaction?.name, '未挂载'),
       capabilityCount: Number.isFinite(requestedCount)
         ? Math.max(0, requestedCount)

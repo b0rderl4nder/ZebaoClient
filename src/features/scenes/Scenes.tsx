@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { activateScene, fetchScenes, fetchSceneRuntime, type SceneRuntimeSnapshot, type SceneSummary } from '../../api/sceneRuntime'
 import { createSceneConfig, deleteSceneConfig, fetchSceneDetail, saveSceneConfig, type MountOption, type SceneConfig, type SceneDetail } from '../../api/sceneConfig'
 import { operatorPage } from '../../api/operator'
+import { voiceMountName } from '../../api/voiceSettings'
+import CapabilityParameters, { parameterError, parameterObject } from './CapabilityParameters'
 
 const comparable = (scene: SceneConfig) => JSON.stringify({ ...scene, active: undefined })
 const tabs = ['能力', '语音与交互', '知识与展示']
@@ -15,6 +17,7 @@ export default function Scenes({ simulated = false }: { simulated?: boolean }) {
   const [draft, setDraft] = useState<SceneConfig | null>(null)
   const [tab, setTab] = useState(0)
   const [showAll, setShowAll] = useState(false)
+  const [expandedCapability, setExpandedCapability] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState('')
@@ -92,6 +95,10 @@ export default function Scenes({ simulated = false }: { simulated?: boolean }) {
   }
   const save = () => perform('save', async () => {
     if (!draft || !detail) return
+    for (const item of detail.catalog.filter(item => draft.capabilities.includes(item.id))) {
+      const invalid = parameterError(item.settings_schema || [], parameterObject(draft.settings[item.id]))
+      if (invalid) throw new Error(`${item.name}：${invalid}`)
+    }
     const latest = await fetchSceneDetail(draft.id)
     if (comparable(latest.scene) !== comparable(detail.scene)) throw new Error('此场景已在其他页面修改。请先重新读取，再合并修改。')
     const saved = await saveSceneConfig({ ...draft, name: draft.name.trim() })
@@ -145,9 +152,10 @@ export default function Scenes({ simulated = false }: { simulated?: boolean }) {
           {removing && <div className="scene-delete" role="group" aria-label="删除确认"><p>删除“{draft.name}”？配置进入归档，不删除人员和服务。</p>{runtime?.scene?.id === selected && <label>替代运行场景<select value={replacement} onChange={event => setReplacement(event.target.value)} disabled={Boolean(busy)}><option value="">请选择</option>{scenes.filter(scene => scene.id !== selected).map(scene => <option key={scene.id} value={scene.id}>{scene.name}</option>)}</select></label>}<div className="scene-buttons"><button disabled={Boolean(busy)} onClick={() => setRemoving(false)}>取消</button><button disabled={Boolean(busy) || (runtime?.scene?.id === selected && !replacement)} onClick={() => void remove()}>确认删除</button></div></div>}
           <div className="scene-section-tabs" role="group" aria-label="配置分组">{tabs.map((title, index) => <button key={title} aria-pressed={tab === index} onClick={() => setTab(index)}>{title}</button>)}</div>
           <div className="scene-editor-content">
-            {tab === 0 && <div className="scene-options"><div className="scene-options-heading"><p className="scene-hint">已选 {draft.capabilities.length} 项 · 取消勾选即可移除</p><button onClick={() => setShowAll(value => !value)}>{showAll ? '仅看已选' : '添加能力'}</button></div>{detail.catalog.filter(item => item.scope === 'scene' && item.product_layer === 'capability' && (showAll || draft.capabilities.includes(item.id))).map(item => <div className="scene-capability" key={item.id}><label className="scene-check"><input type="checkbox" checked={draft.capabilities.includes(item.id)} disabled={Boolean(busy)} onChange={event => toggleCapability(item.id, event.target.checked)}/><span>{item.name}</span></label><a href={operatorPage(`capability?id=${encodeURIComponent(item.id)}`)} target="_blank" rel="noreferrer" aria-label={`设置${item.name}`}>参数 ↗</a></div>)}</div>}
+            {tab === 0 && <div className="scene-options"><div className="scene-options-heading"><p className="scene-hint">已选 {draft.capabilities.length} 项 · 取消勾选即可移除</p><button onClick={() => setShowAll(value => !value)}>{showAll ? '仅看已选' : '添加能力'}</button></div>{detail.catalog.filter(item => item.scope === 'scene' && item.product_layer === 'capability' && (showAll || draft.capabilities.includes(item.id))).map(item => <div key={item.id}><div className="scene-capability"><label className="scene-check"><input type="checkbox" checked={draft.capabilities.includes(item.id)} disabled={Boolean(busy)} onChange={event => toggleCapability(item.id, event.target.checked)}/><span>{item.name}</span></label><button aria-label={`设置${item.name}`} aria-expanded={expandedCapability === item.id} onClick={() => setExpandedCapability(value => value === item.id ? '' : item.id)}>设置 {expandedCapability === item.id ? '−' : '+'}</button></div>{expandedCapability === item.id && <CapabilityParameters item={item} value={draft.settings[item.id]} disabled={Boolean(busy) || !draft.capabilities.includes(item.id)} onChange={value => patch({ settings: { ...draft.settings, [item.id]: value } })}/>}</div>)}</div>}
             {tab === 1 && <div className="scene-profile-fields">
-              <label>语音配置<select value={draft.provider_mounts.voice_profile_id || ''} disabled={Boolean(busy)} onChange={event => mount({ voice_profile_id: event.target.value })}><option value="" disabled>请选择</option>{detail.provider_mount_catalog?.voice_profiles?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <label>这个场景使用的语音<select value={draft.provider_mounts.voice_profile_id || ''} disabled={Boolean(busy)} onChange={event => mount({ voice_profile_id: event.target.value })}><option value="" disabled>请选择</option>{detail.provider_mount_catalog?.voice_profiles?.map(item => <option key={item.id} value={item.id}>{voiceMountName(item.id, item.name, detail.shared_voice_pipeline_provider)}</option>)}</select></label>
+              <Link to="/dashboard/foundation/voice">设置系统默认、音色与唤醒 →</Link>
               {nativeWake ? <p className="scene-hint">当前云端链路：实体麦克风先说“泽宝”，扫码语音直接进入。激活规则在基础系统统一配置。</p> : <label>交互策略<select value={draft.interaction_policy_id} disabled={Boolean(busy)} onChange={event => patch({ interaction_policy_id: event.target.value, provider_mounts: { ...draft.provider_mounts, interaction_profile_id: event.target.value } })}>{detail.interaction_policies.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
               <Link to="/dashboard/foundation/interaction">设备具身交互设置 →</Link>
               <label>场景说明<textarea rows={2} maxLength={160} value={draft.description} disabled={Boolean(busy)} onChange={event => patch({ description: event.target.value })}/></label>

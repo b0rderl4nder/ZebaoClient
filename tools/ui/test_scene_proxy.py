@@ -27,6 +27,7 @@ class Upstream(BaseHTTPRequestHandler):
 
     do_POST = do_GET
     do_PUT = do_GET
+    do_PATCH = do_GET
     do_DELETE = do_GET
 
     def log_message(self, *args):
@@ -102,6 +103,14 @@ class SceneProxyTests(unittest.TestCase):
         self.assertEqual(connection.getresponse().status, 413)
         connection.close()
         self.assertFalse(Upstream.calls)
+
+    def test_native_voice_contracts_only(self):
+        for method, path in [('GET', '/api/v1/scenes'), ('GET', '/api/v1/ui/runtime'), ('GET', '/api/v1/ui/scenes'), ('GET', '/api/v1/settings/voice-activation'), ('PATCH', '/api/v1/settings/voice-activation'), ('PATCH', '/api/v1/scenes/voice-pipeline'), ('POST', '/api/v1/backend_config')]:
+            data = b'{}' if method != 'GET' else None
+            self.assertEqual(self.request(path, method, data)[0], 200)
+            self.assertEqual(Upstream.calls[-1], (method, path, data or b''))
+        self.assertEqual(self.request('/api/v1/backend_config', 'GET')[0], 403)
+        self.assertEqual(self.request('/api/v1/settings', 'PATCH', b'{}')[0], 403)
 
 
 if __name__ == '__main__':

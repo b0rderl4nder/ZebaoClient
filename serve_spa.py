@@ -18,8 +18,15 @@ MAX_BODY = 1024 * 1024
 
 
 def allowed_scene_request(method: str, path: str) -> bool:
-    """Fixed local upstream and scene endpoints only, never a general proxy."""
+    """Fixed local upstream and explicitly supported configuration contracts."""
     pathname = urlparse(path).path
+    voice_endpoints = {
+        'GET': {'/api/v1/ui/scenes', '/api/v1/ui/runtime', '/api/v1/scenes', '/api/v1/settings/voice-activation'},
+        'PATCH': {'/api/v1/scenes/voice-pipeline', '/api/v1/settings/voice-activation'},
+        'POST': {'/api/v1/backend_config'},
+    }
+    if pathname in voice_endpoints.get(method, set()):
+        return True
     if method == 'GET':
         return bool(re.fullmatch(r'/api/v1/ui/scenes/[a-zA-Z0-9_-]+', pathname))
     if method == 'POST':
@@ -58,7 +65,7 @@ class SPARequestHandler(SimpleHTTPRequestHandler):
         if allowed_origin(origin):
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Vary', 'Origin')
-            self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
             self.send_header('Access-Control-Allow-Headers', 'Content-Type, Accept')
         self.end_headers()
         self.wfile.write(body)
@@ -111,6 +118,7 @@ class SPARequestHandler(SimpleHTTPRequestHandler):
             self.scene_response(404, b'{"ok":false}')
 
     do_PUT = do_POST
+    do_PATCH = do_POST
     do_DELETE = do_POST
 
     def __init__(self, *args, **kwargs):

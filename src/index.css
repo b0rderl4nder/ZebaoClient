@@ -264,7 +264,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .scene-runtime-card__metrics > div:last-child { border-right: 0; }
 .scene-runtime-card__metrics span { color: #7d766e; font-size: 11px; }
 .scene-runtime-card__metrics strong { overflow: hidden; color: #dcd4c9; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.scene-runtime-card__mounts, .scene-runtime-card__message { margin: 0; padding: 13px 22px; border-top: 1px solid #302d28; color: #827b72; font-size: 11px; line-height: 1.55; }
+.scene-runtime-card__mounts, .scene-runtime-card__message { margin: 0; padding: 13px 22px; border-top: 1px solid #302d28; color: #b9b1a6; font-size: 12px; line-height: 1.55; }
 .scene-runtime-card__message { color: #d2a49f; background: #211312; }
 .embodied-card { margin-top: 18px; overflow: hidden; border: 1px solid #34312c; border-radius: 16px; background: #161512; }
 .embodied-card__header { min-height: 74px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid #302d28; }
