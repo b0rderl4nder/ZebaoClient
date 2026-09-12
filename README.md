@@ -2,6 +2,13 @@
 
 > 面向局域网 Reachy Mini / Zebao 的浏览器控制台：发现设备、连接 daemon、观察状态、管理应用、播放动作、调整姿态，并保留一条面向旧展厅 conversation app 的文本对话验证入口。
 
+### 当前产品入口（2026-09-12）
+
+- 场景工作区 `/dashboard/scenes`：从 App 的 `SceneRuntimeSnapshot` 展示真实挂载；切换后回读，未就绪时不制造默认场景。所有能力、知识源和展示目标均来自服务器。
+- 基础系统 `/dashboard/foundation`：搜索并直接进入语音、呼吸、转向、身份、视觉、网络和工程设置。具身配置 `/dashboard/foundation/interaction` 使用同一 App API。
+- 场景创建、复制、归档以及能力详细参数复用 `7862` 管理端的原页面，不建立第二套场景配置库；链接随所连接机器人生成。`↗` 表示在新标签打开管理页。
+- `/dashboard/control?tab=interaction` 自动跳转至基础系统；动作、姿态、应用与仿真地址继续兼容。新版导航为概览、场景、基础系统、控制、应用。
+
 ## 一眼看懂
 
 | 项目 | 当前实现 |

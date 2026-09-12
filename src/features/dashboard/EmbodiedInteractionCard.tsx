@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   fetchEmbodiedInteractionStatus,
   type EmbodiedInteractionStatus,
@@ -29,16 +30,8 @@ const commandLabel: Record<string, string> = {
 }
 
 const simulatedStatus: EmbodiedInteractionStatus = {
-  ok: true,
-  enabled: true,
-  phase: 'idle',
-  active_profile: {
-    id: 'restrained',
-    name: '克制交互',
-    description: '优先听清与稳定回应。',
-    components: { sound_attention: true, heard_acknowledgement: true, speech_motion: true },
-    allowed_reactions: ['affirm', 'uncertain'],
-  },
+  ok: false,
+  enabled: false,
   attention: { source: 'none', target_kind: '', age_ms: null },
   last_execution: { accepted: false, reason: 'waiting', kind: '', age_ms: null },
 }
@@ -68,7 +61,7 @@ export default function EmbodiedInteractionCard({ simulated = false }: { simulat
           setError('')
         }
       } catch (reason) {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : '状态暂不可用')
+        if (!cancelled) { setStatus(null); setError(reason instanceof Error ? reason.message : '状态暂不可用') }
       }
     }
     void refresh()
@@ -97,9 +90,9 @@ export default function EmbodiedInteractionCard({ simulated = false }: { simulat
       <header className="embodied-card__header">
         <div>
           <span>具身交互</span>
-          <strong>{status?.active_profile?.name || '正在连接'}</strong>
+          <strong>{status?.active_profile?.name || (simulated ? '尚未连接设备' : error ? '状态不可用' : '正在连接')}</strong>
         </div>
-        <span className={`status-dot ${status?.enabled ? 'is-active' : ''}`} role="img" aria-label={status?.enabled ? '已启用' : '未启用'} />
+        <Link to="/dashboard/foundation/interaction">配置交互 →</Link>
       </header>
       {error ? (
         <p className="embodied-card__message">交互内核状态暂不可读：{error}</p>

@@ -1,6 +1,5 @@
-import { appUrl } from './client'
-
-export const OPERATOR_APP_PORT = 7862
+import { operatorRequest } from './operator'
+export { OPERATOR_APP_PORT } from './operator'
 
 export interface EmbodiedProfile {
   id: string
@@ -13,6 +12,10 @@ export interface EmbodiedProfile {
 export interface EmbodiedInteractionStatus {
   ok: boolean
   enabled?: boolean
+  activity_level?: string
+  activity_level_source?: string
+  available_activity_levels?: { id: string; name: string; description: string }[]
+  mimic?: { mode?: string; available_modes?: { id: string; name: string; description: string }[] }
   phase?: string
   active_scene_id?: string
   scene?: {
@@ -48,30 +51,20 @@ export interface EmbodiedInteractionPatch {
   scene_id?: string
   /** `auto` removes a scene override and follows the interaction policy. */
   profile_id?: string
+  activity_level?: string
+  mimic_response_mode?: string
 }
 
 export async function fetchEmbodiedInteractionStatus(): Promise<EmbodiedInteractionStatus> {
-  const response = await fetch(appUrl(OPERATOR_APP_PORT, '/api/v1/embodied-interaction'), {
-    headers: { Accept: 'application/json' },
-  })
-  const payload = await response.json().catch(() => ({})) as EmbodiedInteractionStatus
-  if (!response.ok || payload.ok === false) {
-    throw new Error(payload.error || `HTTP ${response.status}`)
-  }
-  return payload
+  return operatorRequest('/api/v1/embodied-interaction')
 }
 
 export async function configureEmbodiedInteraction(
   patch: EmbodiedInteractionPatch,
 ): Promise<EmbodiedInteractionStatus> {
-  const response = await fetch(appUrl(OPERATOR_APP_PORT, '/api/v1/embodied-interaction'), {
+  return operatorRequest('/api/v1/embodied-interaction', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(patch),
   })
-  const payload = await response.json().catch(() => ({})) as EmbodiedInteractionStatus
-  if (!response.ok || payload.ok === false) {
-    throw new Error(payload.error || `HTTP ${response.status}`)
-  }
-  return payload
 }

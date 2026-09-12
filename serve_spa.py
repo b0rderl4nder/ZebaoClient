@@ -14,6 +14,11 @@ class SPARequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
+    def end_headers(self):
+        asset = urlparse(self.path).path.startswith('/assets/')
+        self.send_header('Cache-Control', 'public, max-age=31536000, immutable' if asset else 'no-store')
+        super().end_headers()
+
     def translate_path(self, path: str) -> str:
         parsed = urlparse(path)
         clean_path = unquote(parsed.path).lstrip("/")

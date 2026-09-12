@@ -11,6 +11,9 @@ const Control = lazy(() => import('./features/control/Control'))
 const AppManager = lazy(() => import('./features/app-manager/AppManager'))
 const Conversation = lazy(() => import('./features/conversation/Conversation'))
 const PhysicsSimulation = lazy(() => import('./features/simulation/PhysicsSimulation'))
+const Scenes = lazy(() => import('./features/scenes/Scenes'))
+const Foundation = lazy(() => import('./features/foundation/Foundation'))
+const EmbodiedInteractionControl = lazy(() => import('./features/embodied/EmbodiedInteractionControl'))
 
 function Page({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<div className="route-loading" role="status">正在加载</div>}>{children}</Suspense>
@@ -56,6 +59,9 @@ export default function App() {
       <Route path="/dashboard" element={<ClientShell host={simulated ? '模拟操作界面' : robot?.host ?? ''} simulated={simulated} onSwitchDevice={handleSwitchDevice} />}>
         <Route index element={<Page><Dashboard host={simulated ? '模拟操作界面' : robot?.host ?? ''} simulated={simulated} onSwitchDevice={handleSwitchDevice} /></Page>} />
         <Route path="control" element={<Page><Control simulated={simulated} /></Page>} />
+        <Route path="scenes" element={<Page><Scenes simulated={simulated}/></Page>} />
+        <Route path="foundation" element={<Page><Foundation simulated={simulated}/></Page>} />
+        <Route path="foundation/interaction" element={<Page><EmbodiedInteractionControl simulated={simulated}/></Page>} />
         <Route path="pose" element={<Navigate to="/dashboard/control?tab=pose" replace />} />
         <Route path="motions" element={<Navigate to="/dashboard/control?tab=motions" replace />} />
         <Route path="apps" element={<Page><AppManager simulated={simulated} /></Page>} />

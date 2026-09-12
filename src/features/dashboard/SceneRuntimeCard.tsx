@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   fetchSceneRuntime,
   type SceneRuntimeSnapshot,
@@ -75,7 +76,7 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
           <span>当前场景</span>
           <strong>{summary.sceneName}</strong>
         </div>
-        <span className={`status-dot ${runtime?.ok ? 'is-active' : ''}`} role="img" aria-label={runtime?.ok ? '场景已就绪' : '场景状态暂不可用'} />
+        <Link to="/dashboard/scenes">查看挂载 →</Link>
       </header>
       {error ? (
         <p className="scene-runtime-card__message" role="status">场景运行时暂不可读：{error}</p>

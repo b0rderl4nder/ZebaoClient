@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { operatorPage } from '../../api/operator'
 import {
   configureEmbodiedInteraction,
   fetchEmbodiedInteractionStatus,
@@ -19,6 +21,7 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
   const [status, setStatus] = useState<EmbodiedInteractionStatus | null>(simulated ? simulatedStatus : null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState('')
+  const [notice, setNotice] = useState('')
 
   const refresh = async () => {
     try {
@@ -26,6 +29,7 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
       setStatus(next)
       setError('')
     } catch (reason) {
+      setStatus(null)
       setError(reason instanceof Error ? reason.message : '交互系统状态暂不可用')
     }
   }
@@ -53,23 +57,15 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
   ], [status?.available_profiles])
 
   const save = async (key: string, patch: EmbodiedInteractionPatch) => {
-    if (saving) return
+    if (saving || simulated) return
     setSaving(key)
+    setNotice('')
     setError('')
     try {
-      if (simulated) {
-        setStatus(current => {
-          if (!current) return current
-          if (patch.enabled !== undefined) return { ...current, enabled: patch.enabled }
-          const selected = (current.available_profiles || []).find(profile => profile.id === patch.profile_id)
-          if (!selected || patch.profile_id === 'auto') {
-            return { ...current, profile_source: 'interaction_policy_default' }
-          }
-          return { ...current, active_profile: selected, profile_source: 'scene_override' }
-        })
-        return
-      }
-      setStatus(await configureEmbodiedInteraction(patch))
+      await configureEmbodiedInteraction(patch)
+      const next = await fetchEmbodiedInteractionStatus()
+      setStatus(next)
+      setNotice('已保存')
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '保存失败')
     } finally {
@@ -79,6 +75,7 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
 
   return (
     <section className="embodied-control" aria-label="具身交互系统">
+      <Link className="workspace-back" to="/dashboard/foundation">← 基础系统</Link>
       <header className="embodied-control__header">
         <div>
           <p>运行时控制</p>
@@ -90,7 +87,7 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
           role="switch"
           aria-checked={Boolean(status?.enabled)}
           className={`embodied-control__switch ${status?.enabled ? 'is-on' : ''}`}
-          disabled={Boolean(saving) || !status}
+          disabled={Boolean(saving) || !status || simulated}
           onClick={() => void save('enabled', { enabled: !status?.enabled })}
         >
           <i aria-hidden="true" />
@@ -98,14 +95,23 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
         </button>
       </header>
 
-      {error ? <p className="embodied-control__error">{error}</p> : null}
+      {error ? <p className="embodied-control__error" role="alert">{error}<button onClick={() => void refresh()}>重试</button></p> : null}
+      <p className="workspace-save-state" role="status">{saving ? '保存中…' : notice}</p>
       {simulated ? <p className="embodied-control__boundary">预览模式不提供场景、能力或具身档案的替代数据；请连接机器人读取真实运行态。</p> : null}
 
       <div className="embodied-control__status">
         <div><span>当前场景</span><strong>{status?.scene?.name || '场景状态暂不可用'}</strong></div>
-        <div><span>交互阶段</span><strong>{status?.phase === 'listening' ? '正在听' : status?.phase === 'thinking' ? '正在思考' : status?.phase === 'speaking' ? '正在表达' : '待机'}</strong></div>
+        <div><span>交互阶段</span><strong>{{ listening: '正在听', thinking: '正在思考', speaking: '正在表达', idle: '待机', sleeping: '休眠', stopped: '已停止' }[status?.phase || ''] || '状态未就绪'}</strong></div>
         <div><span>动作写入</span><strong>统一安全控制</strong></div>
       </div>
+
+      {!simulated && status && <div className="foundation-live-settings">
+        <label><span>当前场景活跃度</span><select aria-label="当前场景活跃度" value={status.activity_level || ''} disabled={Boolean(saving) || !sceneId} onChange={event => void save('activity', { scene_id: sceneId, activity_level: event.target.value })}>{(status.available_activity_levels || []).map(level => <option key={level.id} value={level.id}>{level.name}</option>)}</select></label>
+        <p>{status.available_activity_levels?.find(level => level.id === status.activity_level)?.description}</p>
+        <label><span>快速模仿</span><select aria-label="快速模仿" value={status.mimic?.mode || ''} disabled={Boolean(saving)} onChange={event => void save('mimic', { mimic_response_mode: event.target.value })}>{status.mimic?.available_modes?.map(mode => <option key={mode.id} value={mode.id}>{mode.name}</option>)}</select></label>
+        <p>仅正对的单人空闲时模仿。此开关适用于整台设备。</p>
+        <a href={operatorPage('device/motion')} target="_blank" rel="noreferrer">呼吸开关与听声转向设置 ↗</a>
+      </div>}
 
       <div className="embodied-control__profiles" role="group" aria-label="场景表达档案">
         <div className="embodied-control__section-title">
@@ -134,9 +140,6 @@ export default function EmbodiedInteractionControl({ simulated = false }: { simu
         </div>
       </div>
 
-      <p className="embodied-control__boundary">
-        人声、视觉和模型只能提交受限意图；只有 MovementManager 可以写入实体舵机。
-      </p>
     </section>
   )
 }

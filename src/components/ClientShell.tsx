@@ -2,9 +2,10 @@ import { NavLink, Outlet } from 'react-router-dom'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: '概览', mark: '01', end: true },
-  { to: '/dashboard/control', label: '控制', mark: '02' },
-  { to: '/dashboard/apps', label: '应用', mark: '03' },
-  { to: '/dashboard/simulation', label: '仿真', mark: '04' },
+  { to: '/dashboard/scenes', label: '场景', mark: '02' },
+  { to: '/dashboard/foundation', label: '基础系统', mark: '03' },
+  { to: '/dashboard/control', label: '控制', mark: '04' },
+  { to: '/dashboard/apps', label: '应用', mark: '05' },
 ] as const
 
 export default function ClientShell({
@@ -30,6 +31,7 @@ export default function ClientShell({
             </NavLink>
           ))}
         </nav>
+        <NavLink className="client-shell__engineering" to="/dashboard/simulation">物理仿真 →</NavLink>
         <button type="button" onClick={onSwitchDevice}>切换设备</button>
       </aside>
       <main className="client-shell__content"><Outlet /></main>

@@ -9,7 +9,7 @@ import EmbodiedInteractionControl from '../features/embodied/EmbodiedInteraction
 import { playSimulationPreset, SIMULATION_PRESETS } from '../api/simulation'
 
 describe('桌面控制端信息架构', () => {
-  it('主导航严格收口为概览、控制、应用和仿真', async () => {
+  it('主导航直接呈现场景和基础系统，仿真保留独立入口', async () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
@@ -21,8 +21,8 @@ describe('桌面控制端信息架构', () => {
     )
 
     const desktopNavigation = screen.getByLabelText('设备控制导航')
-    expect(desktopNavigation.querySelectorAll('nav a')).toHaveLength(4)
-    for (const name of ['概览', '控制', '应用', '仿真']) {
+    expect(desktopNavigation.querySelectorAll('nav a')).toHaveLength(5)
+    for (const name of ['概览', '场景', '基础系统', '控制', '应用']) {
       expect(screen.getAllByText(name)).toHaveLength(2)
     }
     expect((await axe.run(document.body, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
@@ -47,7 +47,7 @@ describe('桌面控制端信息架构', () => {
   })
 
   it('将具身交互呈现为独立运行时控制，而不是能力导航', async () => {
-    const { container } = render(<EmbodiedInteractionControl simulated />)
+    const { container } = render(<MemoryRouter><EmbodiedInteractionControl simulated /></MemoryRouter>)
 
     expect(screen.getByRole('heading', { name: '具身交互' })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: '已暂停' })).toHaveAttribute('aria-checked', 'false')

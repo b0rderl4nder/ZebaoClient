@@ -1,5 +1,4 @@
-import { appUrl } from './client'
-import { OPERATOR_APP_PORT } from './embodied'
+import { operatorRequest } from './operator'
 
 export interface SceneRuntimeItem {
   id: string
@@ -39,13 +38,20 @@ export interface SceneRuntimeSnapshot {
 }
 
 export async function fetchSceneRuntime(signal?: AbortSignal): Promise<SceneRuntimeSnapshot> {
-  const response = await fetch(appUrl(OPERATOR_APP_PORT, '/api/v1/ui/runtime'), {
-    headers: { Accept: 'application/json' },
-    signal,
-  })
-  const payload = await response.json().catch(() => ({})) as SceneRuntimeSnapshot
-  if (!response.ok || payload.ok === false) {
-    throw new Error(payload.state || 'HTTP ' + response.status)
-  }
-  return payload
+  return operatorRequest('/api/v1/ui/runtime', { signal })
+}
+
+export interface SceneSummary {
+  id: string
+  name: string
+  active: boolean
+  capability_count: number
+}
+
+export function fetchScenes(signal?: AbortSignal) {
+  return operatorRequest<{ scenes: SceneSummary[] }>('/api/v1/ui/scenes', { signal })
+}
+
+export function activateScene(id: string) {
+  return operatorRequest(`/api/v1/scenes/${encodeURIComponent(id)}/activate`, { method: 'POST' })
 }

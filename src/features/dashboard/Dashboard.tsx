@@ -9,10 +9,10 @@ import EmbodiedInteractionCard from './EmbodiedInteractionCard'
 import SceneRuntimeCard from './SceneRuntimeCard'
 
 const links = [
+  { to: '/dashboard/scenes', title: '场景配置', note: '能力、知识库与展示目标' },
+  { to: '/dashboard/foundation', title: '基础系统', note: '语音、感知与设备设置' },
   { to: '/dashboard/control', title: '控制', note: '动作与姿态' },
   { to: '/dashboard/apps', title: '应用', note: '安装与运行' },
-  { to: '/dashboard/chat', title: '对话', note: '最近状态' },
-  { to: '/dashboard/simulation', title: '仿真', note: '真实模型与物理验证' },
 ]
 
 const wait = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms))
