@@ -4,6 +4,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import ClientShell from '../components/ClientShell'
 import DeviceDiscovery from '../features/discovery/DeviceDiscovery'
+import Dashboard from '../features/dashboard/Dashboard'
+import EmbodiedInteractionControl from '../features/embodied/EmbodiedInteractionControl'
 import { playSimulationPreset, SIMULATION_PRESETS } from '../api/simulation'
 
 describe('桌面控制端信息架构', () => {
@@ -41,6 +43,29 @@ describe('桌面控制端信息架构', () => {
 
     expect(screen.getByLabelText('设备地址')).toBeInTheDocument()
     expect(container.textContent).not.toMatch(/MuJoCo.*地址|服务地址|PowerShell/)
+    expect((await axe.run(container, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
+  })
+
+  it('将具身交互呈现为独立运行时控制，而不是能力导航', async () => {
+    const { container } = render(<EmbodiedInteractionControl simulated />)
+
+    expect(screen.getByRole('heading', { name: '具身交互' })).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: '已暂停' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByText('表达档案')).toBeInTheDocument()
+    expect(container.textContent).toContain('统一安全控制')
+    expect((await axe.run(container, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
+  })
+
+  it('概览只读取场景运行时快照，不制造默认场景或客户端能力目录', async () => {
+    const { container } = render(
+      <MemoryRouter>
+        <Dashboard host="192.168.3.83" simulated />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByLabelText('当前场景运行时')).toBeInTheDocument()
+    expect(container.textContent).toContain('预览模式未连接机器人，不显示虚构的场景或能力。')
+    expect(container.textContent).not.toMatch(/默认场景|普通对话场景/)
     expect((await axe.run(container, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
   })
 })

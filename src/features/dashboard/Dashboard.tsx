@@ -5,6 +5,8 @@ import { fetchDaemonStatus, restartDaemon, startDaemon, stopDaemon } from '../..
 import { getCurrentAppStatus } from '../../api/apps'
 import { setMotorMode } from '../../api/motors'
 import { getFullState } from '../../api/state'
+import EmbodiedInteractionCard from './EmbodiedInteractionCard'
+import SceneRuntimeCard from './SceneRuntimeCard'
 
 const links = [
   { to: '/dashboard/control', title: '控制', note: '动作与姿态' },
@@ -80,6 +82,8 @@ export default function Dashboard({ host, simulated = false, onSwitchDevice }: {
         <div><span>对话应用</span><strong>{appRunning ? '运行中' : '未运行'}</strong></div>
         {!simulated && <div className="dashboard-controls">{running ? <button onClick={() => void run('stop')} disabled={Boolean(busy)}>{busy === 'stop' ? '正在停止' : '停止'}</button> : <button className="is-primary" onClick={() => void run('start')} disabled={Boolean(busy)}>{busy === 'start' ? '正在启动' : '启动'}</button>}<button onClick={() => void run('restart')} disabled={Boolean(busy)}>{busy === 'restart' ? '正在重启' : '重启'}</button></div>}
       </section>
+      <SceneRuntimeCard simulated={simulated} />
+      <EmbodiedInteractionCard simulated={simulated} />
       <nav className="dashboard-actions" aria-label="常用控制">{links.map(item => <Link key={item.to} to={item.to}><strong>{item.title}</strong><span>{item.note}</span></Link>)}</nav>
       {onSwitchDevice && <button className="dashboard-switch" type="button" onClick={onSwitchDevice}>切换设备</button>}
     </main>
