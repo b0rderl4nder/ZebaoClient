@@ -13,6 +13,7 @@ const Conversation = lazy(() => import('./features/conversation/Conversation'))
 const PhysicsSimulation = lazy(() => import('./features/simulation/PhysicsSimulation'))
 const Scenes = lazy(() => import('./features/scenes/Scenes'))
 const Foundation = lazy(() => import('./features/foundation/Foundation'))
+const Setup = lazy(() => import('./features/setup/Setup'))
 const EmbodiedInteractionControl = lazy(() => import('./features/embodied/EmbodiedInteractionControl'))
 
 function Page({ children }: { children: React.ReactNode }) {
@@ -30,7 +31,7 @@ export default function App() {
   const handleConnect = useCallback(async (host: string, port: number) => {
     setSimulated(false)
     localStorage.removeItem(SIMULATION_KEY)
-    await connect(host, port); setStoredRobot(host, port); navigate('/dashboard')
+    if (await connect(host, port)) { setStoredRobot(host, port); navigate('/dashboard/setup') }
   }, [connect, navigate])
 
   const handleSimulate = useCallback(() => {
@@ -50,7 +51,7 @@ export default function App() {
   useEffect(() => {
     if (simulated) return
     const stored = getStoredRobot()
-    if (stored && !connected) { connect(stored.host, stored.port).then(() => { if (window.location.pathname === '/') navigate('/dashboard') }) }
+    if (stored && !connected) { connect(stored.host, stored.port).then(ok => { if (ok && window.location.pathname === '/') navigate('/dashboard/setup') }) }
   }, [connect, connected, navigate, simulated])
 
   return (
@@ -60,6 +61,7 @@ export default function App() {
         <Route index element={<Page><Dashboard host={simulated ? '模拟操作界面' : robot?.host ?? ''} simulated={simulated} onSwitchDevice={handleSwitchDevice} /></Page>} />
         <Route path="control" element={<Page><Control simulated={simulated} /></Page>} />
         <Route path="scenes" element={<Page><Scenes simulated={simulated}/></Page>} />
+        <Route path="setup" element={<Page><Setup simulated={simulated} host={robot?.host || ''}/></Page>} />
         <Route path="foundation" element={<Page><Foundation simulated={simulated}/></Page>} />
         <Route path="foundation/interaction" element={<Page><EmbodiedInteractionControl simulated={simulated}/></Page>} />
         <Route path="pose" element={<Navigate to="/dashboard/control?tab=pose" replace />} />

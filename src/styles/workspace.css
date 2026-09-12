@@ -1,4 +1,9 @@
 .workspace-page { min-width: 0; }
+.client-shell__utilities { display: grid; gap: 4px; }
+.client-shell__utilities .client-shell__engineering { margin-top: 0; }
+.setup-entry { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px; margin-bottom: 20px; border: 1px solid #80603d; border-radius: 14px; background: #252017; text-decoration: none; color: #f3cf9b; }
+.setup-entry strong, .setup-entry small { display: block; }
+.setup-entry small { margin-top: 6px; font-size: 13px; line-height: 1.6; color: #c5b9a7; }
 .workspace-body { max-width: 1160px; margin: 0 auto; padding: 24px 36px 64px; }
 .workspace-page a, .workspace-back, .foundation-live-settings > a { text-decoration: none; color: #eac088; }
 .workspace-primary { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid #695032; border-radius: 12px; background: #2a2116; }

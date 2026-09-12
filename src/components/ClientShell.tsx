@@ -31,7 +31,10 @@ export default function ClientShell({
             </NavLink>
           ))}
         </nav>
-        <NavLink className="client-shell__engineering" to="/dashboard/simulation">物理仿真 →</NavLink>
+        <div className="client-shell__utilities">
+          <NavLink className="client-shell__engineering" to="/dashboard/setup">配置引导 →</NavLink>
+          <NavLink className="client-shell__engineering" to="/dashboard/simulation">物理仿真 →</NavLink>
+        </div>
         <button type="button" onClick={onSwitchDevice}>切换设备</button>
       </aside>
       <main className="client-shell__content"><Outlet /></main>

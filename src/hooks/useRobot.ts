@@ -28,9 +28,11 @@ export function useRobot() {
       setConnected(true)
       const recent = loadRecentRobots()
       saveRecent([info, ...recent.filter(item => item.host !== host || item.port !== port)])
+      return true
     } catch (error) {
       setError(`连接失败：${error instanceof Error ? error.message : '未知错误'}`)
       setConnected(false)
+      return false
     }
   }, [])
 

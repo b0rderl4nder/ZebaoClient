@@ -50,6 +50,7 @@ export default function Scenes({ simulated = false }: { simulated?: boolean }) {
   return <div className="workspace-page">
     <header className="product-header"><div><h1>场景</h1><p>能力与服务，按需组合</p></div>{!simulated && <a className="workspace-primary" href={operatorPage('scenes')} target="_blank" rel="noreferrer">创建与管理</a>}</header>
     <div className="workspace-body">
+      <Link className="setup-entry" to="/dashboard/setup?step=1"><span><strong>不知道从哪里开始？</strong><small>按框架逐步配置场景与挂载</small></span><span aria-hidden="true">→</span></Link>
       {simulated ? <p className="workspace-empty">连接机器人后查看实际场景与挂载。</p> : error ? <div className="workspace-error" role="alert">{error}<button onClick={() => setRevision(value => value + 1)}>重试</button></div> : !runtime ? <p role="status">正在读取场景</p> : null}
       {available && <section className="runtime-workspace" aria-label="当前场景挂载">
         <header><div><span className="workspace-eyebrow">正在运行</span><h2>{current?.name}</h2></div><a href={operatorPage(`scene?id=${encodeURIComponent(current?.id || '')}`)} target="_blank" rel="noreferrer">配置场景 →</a></header>

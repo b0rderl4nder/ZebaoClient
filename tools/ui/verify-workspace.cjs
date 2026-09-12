@@ -28,6 +28,10 @@ async function main() {
       page.on('pageerror', error => failures.push(error.message))
       page.on('requestfailed', request => failures.push(`request failed ${new URL(request.url()).pathname}: ${request.failure()?.errorText}`))
       for (const [name, route, ready] of [
+        ['setup-services', '/dashboard/setup?step=0', '#setup-title'],
+        ['setup-scenes', '/dashboard/setup?step=1', '#setup-title'],
+        ['setup-interaction', '/dashboard/setup?step=2', '#setup-title'],
+        ['setup-review', '/dashboard/setup?step=3', '#setup-title'],
         ['scenes', '/dashboard/scenes', '[aria-label="当前场景挂载"]'],
         ['foundation', '/dashboard/foundation', '[aria-label="查找设置"], input[type="search"]'],
         ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
@@ -39,6 +43,7 @@ async function main() {
           console.error(JSON.stringify(failures))
           throw error
         }
+        if (name.startsWith('setup-')) await page.getByText('已读取当前场景配置', { exact: false }).waitFor({ timeout: 15000 })
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
         const violations = await page.evaluate(async () => (await axe.run(document.body, { rules: { region: { enabled: false } } })).violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.target) })))
         const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }))

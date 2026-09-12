@@ -77,6 +77,7 @@ export default function Dashboard({ host, simulated = false, onSwitchDevice }: {
     <header className="product-header"><div><h1>概览</h1><p>{simulated ? '界面预览' : host || '等待设备'}</p></div><span className={`dashboard-health ${ready ? 'is-online' : ''}`}><i/>{ready ? '设备在线' : '设备离线'}</span></header>
     <main className="dashboard-body">
       {error && <div className="dashboard-error" role="alert">{error}</div>}
+      <Link className="setup-entry" to="/dashboard/setup"><span><strong>按步骤配置泽宝</strong><small>服务连接 → 场景组合 → 交互与权限 → 检查运行</small></span><span aria-hidden="true">→</span></Link>
       <section className="dashboard-state">
         <div><span>机器人控制</span><strong>{running ? '运行中' : '已停止'}</strong></div>
         <div><span>对话应用</span><strong>{appRunning ? '运行中' : '未运行'}</strong></div>
