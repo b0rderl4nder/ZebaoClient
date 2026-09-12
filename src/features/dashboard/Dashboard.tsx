@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import type { AppStatus, DaemonStatus } from '../../api/types'
 import { fetchDaemonStatus, restartDaemon, startDaemon, stopDaemon } from '../../api/daemon'
 import { getCurrentAppStatus } from '../../api/apps'
@@ -7,13 +6,6 @@ import { setMotorMode } from '../../api/motors'
 import { getFullState } from '../../api/state'
 import EmbodiedInteractionCard from './EmbodiedInteractionCard'
 import SceneRuntimeCard from './SceneRuntimeCard'
-
-const links = [
-  { to: '/dashboard/scenes', title: '场景配置', note: '能力、知识库与展示目标' },
-  { to: '/dashboard/foundation', title: '基础系统', note: '语音、感知与设备设置' },
-  { to: '/dashboard/control', title: '控制', note: '动作与姿态' },
-  { to: '/dashboard/apps', title: '应用', note: '安装与运行' },
-]
 
 const wait = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms))
 const backendReady = (status: DaemonStatus | null) => status?.backend_status?.ready ?? status?.ready ?? false
@@ -28,7 +20,7 @@ async function waitForState(accept: (status: DaemonStatus) => boolean, timeoutMs
   throw new Error(latest?.error || '设备状态更新超时')
 }
 
-export default function Dashboard({ host, simulated = false, onSwitchDevice }: { host: string; simulated?: boolean; onSwitchDevice?: () => void }) {
+export default function Dashboard({ host, simulated = false }: { host: string; simulated?: boolean; onSwitchDevice?: () => void }) {
   const [status, setStatus] = useState<DaemonStatus | null>(simulated ? { ready: true, state: 'simulated', motor_control_mode: 'simulated' } : null)
   const [app, setApp] = useState<AppStatus | null>(simulated ? { info: { name: 'preview', source_kind: 'simulated', description: '' }, state: 'running' } : null)
   const [stateOnline, setStateOnline] = useState(simulated)
@@ -75,9 +67,8 @@ export default function Dashboard({ host, simulated = false, onSwitchDevice }: {
 
   return <div className="dashboard-page">
     <header className="product-header"><div><h1>概览</h1><p>{simulated ? '界面预览' : host || '等待设备'}</p></div><span className={`dashboard-health ${ready ? 'is-online' : ''}`}><i/>{ready ? '设备在线' : '设备离线'}</span></header>
-    <main className="dashboard-body">
+    <div className="dashboard-body">
       {error && <div className="dashboard-error" role="alert">{error}</div>}
-      <Link className="setup-entry" to="/dashboard/setup"><span><strong>按步骤配置泽宝</strong><small>服务连接 → 场景组合 → 交互与权限 → 检查运行</small></span><span aria-hidden="true">→</span></Link>
       <section className="dashboard-state">
         <div><span>机器人控制</span><strong>{running ? '运行中' : '已停止'}</strong></div>
         <div><span>对话应用</span><strong>{appRunning ? '运行中' : '未运行'}</strong></div>
@@ -85,8 +76,6 @@ export default function Dashboard({ host, simulated = false, onSwitchDevice }: {
       </section>
       <SceneRuntimeCard simulated={simulated} />
       <EmbodiedInteractionCard simulated={simulated} />
-      <nav className="dashboard-actions" aria-label="常用控制">{links.map(item => <Link key={item.to} to={item.to}><strong>{item.title}</strong><span>{item.note}</span></Link>)}</nav>
-      {onSwitchDevice && <button className="dashboard-switch" type="button" onClick={onSwitchDevice}>切换设备</button>}
-    </main>
+    </div>
   </div>
 }

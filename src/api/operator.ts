@@ -7,14 +7,14 @@ export function operatorPage(route: string) {
   return appUrl(OPERATOR_APP_PORT, `/#/${route.replace(/^[/#]+/, '')}`)
 }
 
-export async function operatorRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function operatorRequest<T>(path: string, init: RequestInit = {}, sceneConfig = false): Promise<T> {
   const controller = new AbortController()
   const abort = () => controller.abort()
   if (init.signal?.aborted) abort()
   init.signal?.addEventListener('abort', abort, { once: true })
   const timeout = window.setTimeout(abort, 8000)
   try {
-    const response = await fetch(appUrl(OPERATOR_APP_PORT, path), {
+    const response = await fetch(sceneConfig ? appUrl(5173, `/operator-api${path}`) : appUrl(OPERATOR_APP_PORT, path), {
       ...init,
       headers: { Accept: 'application/json', ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
       signal: controller.signal,

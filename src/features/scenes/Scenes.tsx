@@ -1,17 +1,35 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { activateScene, fetchScenes, fetchSceneRuntime, type SceneRuntimeSnapshot, type SceneSummary } from '../../api/sceneRuntime'
+import { createSceneConfig, deleteSceneConfig, fetchSceneDetail, saveSceneConfig, type MountOption, type SceneConfig, type SceneDetail } from '../../api/sceneConfig'
 import { operatorPage } from '../../api/operator'
+
+const comparable = (scene: SceneConfig) => JSON.stringify({ ...scene, active: undefined })
+const tabs = ['能力', '语音与交互', '知识与展示']
 
 export default function Scenes({ simulated = false }: { simulated?: boolean }) {
   const [runtime, setRuntime] = useState<SceneRuntimeSnapshot | null>(null)
   const [scenes, setScenes] = useState<SceneSummary[]>([])
+  const [selected, setSelected] = useState('')
+  const [detail, setDetail] = useState<SceneDetail | null>(null)
+  const [draft, setDraft] = useState<SceneConfig | null>(null)
+  const [tab, setTab] = useState(0)
+  const [showAll, setShowAll] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState('')
   const [revision, setRevision] = useState(0)
+  const [loaded, setLoaded] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [name, setName] = useState('')
+  const [source, setSource] = useState('')
+  const [removing, setRemoving] = useState(false)
+  const [replacement, setReplacement] = useState('')
+  const dirty = Boolean(draft && detail && comparable(draft) !== comparable(detail.scene))
+  const nativeWake = ['cloud_omni', 'aliyun_native_omni'].includes(detail?.voice_pipeline_provider || '')
   const read = useCallback(async (signal?: AbortSignal) => {
     const [snapshot, catalogue] = await Promise.all([fetchSceneRuntime(signal), fetchScenes(signal)])
-    if (!signal?.aborted) { setRuntime(snapshot); setScenes(catalogue.scenes || []); setError('') }
+    if (!signal?.aborted) { setLoaded(true); setRuntime(snapshot); setScenes(catalogue.scenes || []); setSelected(id => id || snapshot.scene?.id || catalogue.scenes?.[0]?.id || '') }
     return snapshot
   }, [])
   useEffect(() => {
@@ -22,47 +40,124 @@ export default function Scenes({ simulated = false }: { simulated?: boolean }) {
       if (pending) return
       pending = true
       try { await read(controller.signal) }
-      catch (reason) { if (!controller.signal.aborted) { setRuntime(null); setError(reason instanceof Error ? reason.message : '场景读取失败') } }
+      catch (reason) { if (!controller.signal.aborted) { setRuntime(null); setScenes([]); setError(reason instanceof Error ? reason.message : '场景读取失败') } }
       finally { pending = false }
     }
-    void refresh()
-    const timer = window.setInterval(() => void refresh(), 5000)
-    return () => { controller.abort(); window.clearInterval(timer) }
+    void refresh(); window.addEventListener('focus', refresh)
+    const timer = window.setInterval(refresh, 5000)
+    return () => { controller.abort(); window.clearInterval(timer); window.removeEventListener('focus', refresh) }
   }, [simulated, revision, read])
-
-  const select = async (id: string) => {
+  useEffect(() => {
+    if (!selected || simulated) return
+    const controller = new AbortController()
+    setDetail(null); setDraft(null); setError(''); setNotice(''); setRemoving(false)
+    fetchSceneDetail(selected, controller.signal).then(data => {
+      if (!controller.signal.aborted) { setDetail(data); setDraft(structuredClone(data.scene)) }
+    }).catch(reason => { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : '无法读取配置') })
+    return () => controller.abort()
+  }, [selected, simulated, revision])
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
+    const navigate = (event: MouseEvent) => {
+      const link = (event.target as Element)?.closest?.('a')
+      if (link && link.target !== '_blank' && !window.confirm('还有未保存的修改，确定离开？')) { event.preventDefault(); event.stopPropagation() }
+    }
+    window.addEventListener('beforeunload', warn); document.addEventListener('click', navigate, true)
+    return () => { window.removeEventListener('beforeunload', warn); document.removeEventListener('click', navigate, true) }
+  }, [dirty])
+  const choose = (id: string) => {
+    if (busy || (dirty && !window.confirm('放弃未保存的修改？'))) return
+    setSelected(id); setCreating(false); setShowAll(false)
+  }
+  const patch = (change: Partial<SceneConfig>) => setDraft(current => current ? { ...current, ...change } : current)
+  const mount = (change: Partial<SceneConfig['provider_mounts']>) => draft && patch({ provider_mounts: { ...draft.provider_mounts, ...change } })
+  const toggleCapability = (id: string, enabled: boolean) => {
+    if (!draft) return
+    const ids = enabled ? [...draft.capabilities, id] : draft.capabilities.filter(value => value !== id)
+    const supported = (values: string[] | undefined, options: MountOption[] = []) => (values || []).filter(value => {
+      const required = options.find(option => option.id === value)?.requires_capability
+      return !required || ids.includes(required)
+    })
+    patch({ capabilities: ids, provider_mounts: { ...draft.provider_mounts,
+      knowledge_source_ids: supported(draft.provider_mounts.knowledge_source_ids, detail?.provider_mount_catalog?.knowledge_sources),
+      display_target_ids: supported(draft.provider_mounts.display_target_ids, detail?.provider_mount_catalog?.display_targets),
+    } })
+  }
+  const perform = async (action: string, task: () => Promise<void>) => {
     if (busy || simulated) return
-    setBusy(id)
-    try {
-      await activateScene(id)
-      const snapshot = await read()
-      if (snapshot.scene?.id !== id) throw new Error('切换尚未生效，请刷新确认。')
-    } catch (reason) { setError(reason instanceof Error ? reason.message : '场景切换失败') }
+    setBusy(action); setError(''); setNotice('')
+    try { await task() } catch (reason) { setError(reason instanceof Error ? reason.message : '操作未完成，请重试') }
     finally { setBusy('') }
   }
-  const current = runtime?.scene
-  const available = !simulated && Boolean(runtime?.ok)
-  const groups = [
-    { title: '能力', values: runtime?.capabilities, route: 'capability', empty: '尚未挂载能力' },
-    { title: '知识库', values: runtime?.knowledge, route: 'scene', empty: '尚未挂载知识源' },
-    { title: '展示目标', values: runtime?.displays, route: 'scene', empty: '尚未挂载展示目标' },
-  ]
-  return <div className="workspace-page">
-    <header className="product-header"><div><h1>场景</h1><p>能力与服务，按需组合</p></div>{!simulated && <a className="workspace-primary" href={operatorPage('scenes')} target="_blank" rel="noreferrer">创建与管理</a>}</header>
+  const save = () => perform('save', async () => {
+    if (!draft || !detail) return
+    const latest = await fetchSceneDetail(draft.id)
+    if (comparable(latest.scene) !== comparable(detail.scene)) throw new Error('此场景已在其他页面修改。请先重新读取，再合并修改。')
+    const saved = await saveSceneConfig({ ...draft, name: draft.name.trim() })
+    setDetail(saved); setDraft(structuredClone(saved.scene)); await read(); setNotice('已保存并发布')
+  })
+  const activate = () => perform('activate', async () => {
+    await activateScene(selected)
+    const snapshot = await read()
+    if (snapshot.scene?.id !== selected) throw new Error('切换尚未生效，请重新读取确认。')
+    setNotice('已切换')
+  })
+  const create = () => perform('create', async () => {
+    const result = await createSceneConfig(name.trim(), source || undefined)
+    setCreating(false); setName(''); setSelected(result.scene_id); await read()
+  })
+  const remove = () => perform('delete', async () => {
+    const current = await fetchSceneRuntime()
+    if (current.scene?.id === selected && !replacement) throw new Error('此场景正在运行，请先选择替代场景。')
+    await deleteSceneConfig(selected, current.scene?.id === selected ? replacement : '')
+    setRemoving(false); setSelected(''); setDetail(null); setDraft(null); await read(); setNotice('已删除，可在归档中恢复')
+  })
+  const startCreate = (copy: boolean) => {
+    if (dirty && !window.confirm('放弃未保存的修改？')) return
+    if (detail) setDraft(structuredClone(detail.scene))
+    setName(copy ? `${draft?.name || ''}副本` : ''); setSource(copy ? selected : ''); setCreating(true); setRemoving(false)
+  }
+  const renderMounts = (title: string, key: 'knowledge_source_ids' | 'display_target_ids', options: MountOption[] = []) => <section className="scene-options"><h2>{title}</h2>{options.length ? options.map(option => {
+    const blocked = Boolean(option.requires_capability && !draft?.capabilities.includes(option.requires_capability))
+    const dependency = detail?.catalog.find(item => item.id === option.requires_capability)?.name
+    return <label key={option.id} className="scene-check"><input type="checkbox" disabled={Boolean(busy) || blocked} checked={draft?.provider_mounts[key]?.includes(option.id) || false} onChange={event => {
+      const values = draft?.provider_mounts[key] || []
+      mount({ [key]: event.target.checked ? [...values, option.id] : values.filter(value => value !== option.id) })
+    }}/><span>{option.name}{blocked && <small>先启用{dependency || '对应能力'}</small>}</span></label>
+  }) : <p className="workspace-empty">暂无可挂载资源</p>}</section>
+
+  return <div className="workspace-page scene-config-page">
+    <header className="product-header"><div><h1>场景</h1><p>选一个场景，直接调整它的能力与挂载。</p></div><button className="workspace-primary" disabled={simulated || Boolean(busy)} onClick={() => startCreate(false)}>新建场景</button></header>
     <div className="workspace-body">
-      <Link className="setup-entry" to="/dashboard/setup?step=1"><span><strong>不知道从哪里开始？</strong><small>按框架逐步配置场景与挂载</small></span><span aria-hidden="true">→</span></Link>
-      {simulated ? <p className="workspace-empty">连接机器人后查看实际场景与挂载。</p> : error ? <div className="workspace-error" role="alert">{error}<button onClick={() => setRevision(value => value + 1)}>重试</button></div> : !runtime ? <p role="status">正在读取场景</p> : null}
-      {available && <section className="runtime-workspace" aria-label="当前场景挂载">
-        <header><div><span className="workspace-eyebrow">正在运行</span><h2>{current?.name}</h2></div><a href={operatorPage(`scene?id=${encodeURIComponent(current?.id || '')}`)} target="_blank" rel="noreferrer">配置场景 →</a></header>
-        <div className="runtime-profiles">
-          <a href={operatorPage('device/voice')} target="_blank" rel="noreferrer"><span>语音链路</span><strong>{runtime?.voice?.label || '未挂载'}</strong></a>
-          <a href={operatorPage(`scene?id=${encodeURIComponent(current?.id || '')}`)} target="_blank" rel="noreferrer"><span>交互策略</span><strong>{runtime?.interaction?.name || '未挂载'}</strong></a>
-          <Link to="/dashboard/foundation/interaction"><span>具身交互</span><strong>查看与配置 →</strong></Link>
-        </div>
-        <div className="runtime-mounts">{groups.map(group => <section key={group.title}><h3>{group.title}<small>{group.values?.length || 0}</small></h3>{group.values?.length ? group.values.map(item => <a key={item.id} href={operatorPage(`${group.route}?id=${encodeURIComponent(group.route === 'scene' ? current?.id || '' : item.id)}`)} target="_blank" rel="noreferrer"><span>{item.name || item.label || item.id}</span><span aria-hidden="true">↗</span></a>) : <p>{group.empty}</p>}</section>)}</div>
-      </section>}
-      {available && <section aria-label="其他场景"><h2 className="workspace-section-title">其他场景</h2><div className="scene-choices">{scenes.filter(scene => scene.id !== current?.id).map(scene => <article key={scene.id}><div><h3>{scene.name}</h3><span>{scene.capability_count} 项能力</span></div><div><a href={operatorPage(`scene?id=${encodeURIComponent(scene.id)}`)} target="_blank" rel="noreferrer">配置</a><button disabled={Boolean(busy)} onClick={() => void select(scene.id)}>{busy === scene.id ? '切换中' : '切换'}</button></div></article>)}</div></section>}
-      {!simulated && <nav className="workspace-footer-links" aria-label="场景资源"><a href={operatorPage('capabilities')} target="_blank" rel="noreferrer">能力管理 ↗</a><a href={operatorPage('people')} target="_blank" rel="noreferrer">人员与权限 ↗</a></nav>}
+      {simulated && <p className="workspace-empty">连接机器人后配置真实场景。</p>}
+      {error && <div className="workspace-error" role="alert">{error}<button disabled={Boolean(busy)} onClick={() => { if (!dirty || window.confirm('重新读取会放弃未保存的修改，继续？')) { setError(''); setRevision(value => value + 1) } }}>重新读取</button></div>}
+      {notice && <p role="status">{notice}</p>}
+      {creating && <form className="scene-inline-form" aria-label="新建场景" onSubmit={event => { event.preventDefault(); void create() }}>
+        <label>场景名称<input autoFocus required maxLength={40} value={name} onChange={event => setName(event.target.value)} disabled={Boolean(busy)}/></label>
+        <label>从哪里开始<select value={source} onChange={event => setSource(event.target.value)} disabled={Boolean(busy)}><option value="">空白场景</option>{scenes.map(scene => <option key={scene.id} value={scene.id}>复制 {scene.name}</option>)}</select></label>
+        <div className="scene-buttons"><button type="button" disabled={Boolean(busy)} onClick={() => setCreating(false)}>取消</button><button className="workspace-primary" disabled={!name.trim() || Boolean(busy)}>{busy === 'create' ? '创建中' : '创建'}</button></div>
+      </form>}
+      {!simulated && <div className="scene-workbench">
+        <nav className="scene-selector" aria-label="选择场景">{scenes.map(scene => <button key={scene.id} aria-pressed={selected === scene.id} disabled={Boolean(busy)} onClick={() => choose(scene.id)}><strong>{scene.name}</strong><span>{runtime?.scene?.id === scene.id ? '运行中' : `${scene.capability_count} 项能力`}</span></button>)}</nav>
+        {!creating && draft && detail ? <section className="scene-editor" aria-label="场景配置">
+          <div className="scene-editor-heading"><label>名称<input aria-label="场景名称" maxLength={40} value={draft.name} disabled={Boolean(busy)} onChange={event => patch({ name: event.target.value })}/></label><div className="scene-buttons"><button disabled={Boolean(busy)} onClick={() => startCreate(true)}>复制</button><button disabled={Boolean(busy) || draft.built_in} title={draft.built_in ? '系统预置场景由后端保护，可复制后调整' : undefined} onClick={() => { setRemoving(true); setReplacement('') }}>删除</button></div></div>
+          {removing && <div className="scene-delete" role="group" aria-label="删除确认"><p>删除“{draft.name}”？配置进入归档，不删除人员和服务。</p>{runtime?.scene?.id === selected && <label>替代运行场景<select value={replacement} onChange={event => setReplacement(event.target.value)} disabled={Boolean(busy)}><option value="">请选择</option>{scenes.filter(scene => scene.id !== selected).map(scene => <option key={scene.id} value={scene.id}>{scene.name}</option>)}</select></label>}<div className="scene-buttons"><button disabled={Boolean(busy)} onClick={() => setRemoving(false)}>取消</button><button disabled={Boolean(busy) || (runtime?.scene?.id === selected && !replacement)} onClick={() => void remove()}>确认删除</button></div></div>}
+          <div className="scene-section-tabs" role="group" aria-label="配置分组">{tabs.map((title, index) => <button key={title} aria-pressed={tab === index} onClick={() => setTab(index)}>{title}</button>)}</div>
+          <div className="scene-editor-content">
+            {tab === 0 && <div className="scene-options"><div className="scene-options-heading"><p className="scene-hint">已选 {draft.capabilities.length} 项 · 取消勾选即可移除</p><button onClick={() => setShowAll(value => !value)}>{showAll ? '仅看已选' : '添加能力'}</button></div>{detail.catalog.filter(item => item.scope === 'scene' && item.product_layer === 'capability' && (showAll || draft.capabilities.includes(item.id))).map(item => <div className="scene-capability" key={item.id}><label className="scene-check"><input type="checkbox" checked={draft.capabilities.includes(item.id)} disabled={Boolean(busy)} onChange={event => toggleCapability(item.id, event.target.checked)}/><span>{item.name}</span></label><a href={operatorPage(`capability?id=${encodeURIComponent(item.id)}`)} target="_blank" rel="noreferrer" aria-label={`设置${item.name}`}>参数 ↗</a></div>)}</div>}
+            {tab === 1 && <div className="scene-profile-fields">
+              <label>语音配置<select value={draft.provider_mounts.voice_profile_id || ''} disabled={Boolean(busy)} onChange={event => mount({ voice_profile_id: event.target.value })}><option value="" disabled>请选择</option>{detail.provider_mount_catalog?.voice_profiles?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              {nativeWake ? <p className="scene-hint">当前云端链路：实体麦克风先说“泽宝”，扫码语音直接进入。激活规则在基础系统统一配置。</p> : <label>交互策略<select value={draft.interaction_policy_id} disabled={Boolean(busy)} onChange={event => patch({ interaction_policy_id: event.target.value, provider_mounts: { ...draft.provider_mounts, interaction_profile_id: event.target.value } })}>{detail.interaction_policies.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+              <Link to="/dashboard/foundation/interaction">设备具身交互设置 →</Link>
+              <label>场景说明<textarea rows={2} maxLength={160} value={draft.description} disabled={Boolean(busy)} onChange={event => patch({ description: event.target.value })}/></label>
+            </div>}
+            {tab === 2 && <div className="scene-resource-columns">{renderMounts('知识来源', 'knowledge_source_ids', detail.provider_mount_catalog?.knowledge_sources)}{renderMounts('展示目标', 'display_target_ids', detail.provider_mount_catalog?.display_targets)}</div>}
+          </div>
+          <footer className="scene-editor-footer"><span>{dirty ? '有未保存修改' : runtime?.scene?.id === selected ? '当前运行场景' : '修改不会自动切换场景'}</span><div className="scene-buttons">{dirty && <button disabled={Boolean(busy)} onClick={() => { if (window.confirm('放弃未保存的修改？')) setDraft(structuredClone(detail.scene)) }}>还原</button>}{runtime?.scene?.id !== selected && <button disabled={dirty || Boolean(busy)} onClick={() => void activate()}>设为当前</button>}<button className="workspace-primary" disabled={!dirty || !draft.name.trim() || Boolean(busy)} onClick={() => void save()}>{busy === 'save' ? '保存中' : '保存'}</button></div></footer>
+        </section> : !creating && !error && <p role="status">{selected ? '正在读取配置' : loaded ? '还没有场景，点击“新建场景”开始。' : '正在读取场景'}</p>}
+      </div>}
+      {!simulated && <details className="scene-more"><summary>更多管理</summary><nav className="workspace-footer-links"><a href={operatorPage('scenes')} target="_blank" rel="noreferrer">模板与归档 ↗</a><a href={operatorPage(`scene?id=${encodeURIComponent(selected)}`)} target="_blank" rel="noreferrer">流程与高级参数 ↗</a><a href={operatorPage('capabilities')} target="_blank" rel="noreferrer">全局能力 ↗</a><a href={operatorPage('people')} target="_blank" rel="noreferrer">人员与权限 ↗</a></nav></details>}
     </div>
   </div>
 }

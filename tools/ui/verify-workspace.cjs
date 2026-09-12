@@ -17,10 +17,17 @@ async function main() {
         localStorage.setItem('zebao_current_robot', JSON.stringify({ host, port: 8000 }))
         localStorage.removeItem('zebao_simulated_mode')
       }, robot)
-      await context.route('**/*', route => {
+      await context.route('**/*', async route => {
         if (!['GET', 'HEAD', 'OPTIONS'].includes(route.request().method())) {
           failures.push(`unexpected write ${route.request().method()}`)
           return route.abort()
+        }
+        // Local asset preview only: emulate the tested fixed-upstream transport.
+        // Deployed verification uses the real Client proxy with no interception.
+        if (base.includes('127.0.0.1') && new URL(route.request().url()).pathname.startsWith('/operator-api/')) {
+          const requestUrl = new URL(route.request().url())
+          const response = await context.request.get(`http://${robot}:7862${requestUrl.pathname.replace('/operator-api', '')}${requestUrl.search}`)
+          return route.fulfill({ response, headers: { ...response.headers(), 'access-control-allow-origin': '*' } })
         }
         return route.continue()
       })
@@ -28,11 +35,10 @@ async function main() {
       page.on('pageerror', error => failures.push(error.message))
       page.on('requestfailed', request => failures.push(`request failed ${new URL(request.url()).pathname}: ${request.failure()?.errorText}`))
       for (const [name, route, ready] of [
-        ['setup-services', '/dashboard/setup?step=0', '#setup-title'],
-        ['setup-scenes', '/dashboard/setup?step=1', '#setup-title'],
-        ['setup-interaction', '/dashboard/setup?step=2', '#setup-title'],
-        ['setup-review', '/dashboard/setup?step=3', '#setup-title'],
-        ['scenes', '/dashboard/scenes', '[aria-label="当前场景挂载"]'],
+        ['overview', '/dashboard', '[aria-label="当前场景运行时"]'],
+        ['scenes', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-profiles', '/dashboard/scenes', '[aria-label="场景配置"]'],
+        ['scene-resources', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['foundation', '/dashboard/foundation', '[aria-label="查找设置"], input[type="search"]'],
         ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
       ]) {
@@ -43,7 +49,8 @@ async function main() {
           console.error(JSON.stringify(failures))
           throw error
         }
-        if (name.startsWith('setup-')) await page.getByText('已读取当前场景配置', { exact: false }).waitFor({ timeout: 15000 })
+        if (name === 'scene-profiles') await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+        if (name === 'scene-resources') await page.getByRole('button', { name: '知识与展示', exact: true }).click()
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
         const violations = await page.evaluate(async () => (await axe.run(document.body, { rules: { region: { enabled: false } } })).violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.target) })))
         const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }))
