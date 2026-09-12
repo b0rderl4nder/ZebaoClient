@@ -38,6 +38,15 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
         aliyun_native_omni_not_configured: '请先填写云端 Omni 的连接与密钥，再切换。',
         empty_aliyun_native_omni_key: '首次配置需要服务密钥。',
         invalid_aliyun_native_omni_ws_url: '服务地址无效，请填写正确的 WebSocket 地址。',
+        prompt_slot_not_found: '此提示词用途已不存在，请重新读取。',
+        prompt_variant_not_found: '此版本已不存在，请重新读取。',
+        prompt_slot_read_only: '此提示词由外部服务维护，只能查看。',
+        prompt_default_cannot_delete: '默认版本不可删除，可新建自定义版本。',
+        prompt_text_required: '请填写提示词内容。',
+        prompt_text_too_long: '提示词超出此用途的长度限制。',
+        prompt_variable_missing: '缺少必要模板变量，请保留编辑框下方列出的变量。',
+        prompt_variable_invalid: '存在不支持的模板变量，请检查花括号中的名称。',
+        prompt_template_invalid: '模板格式不正确，请检查变量花括号。',
       }
       throw new Error(reasons[String(payload?.error || '')] || '机器人未能完成请求，请检查应用状态后重试。')
     }

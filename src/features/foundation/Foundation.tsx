@@ -24,7 +24,7 @@ const sections = [
     { name: '运行日志', note: '事件 · 故障原因', route: 'engineering/logs' },
     { name: '链路诊断', note: '回合 · 延迟 · 执行结果', route: 'engineering/pipeline' },
     { name: '验收记录', note: '发布版本 · 真实证据', route: 'engineering/acceptance' },
-    { name: '提示词', note: '场景 · 用途 · 版本', route: 'engineering/prompts' },
+    { name: '提示词', note: '用途 · 版本 · 恢复默认', local: '/dashboard/foundation/prompts', route: '' },
   ] },
 ]
 

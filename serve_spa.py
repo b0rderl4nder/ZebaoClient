@@ -20,6 +20,12 @@ MAX_BODY = 1024 * 1024
 def allowed_scene_request(method: str, path: str) -> bool:
     """Fixed local upstream and explicitly supported configuration contracts."""
     pathname = urlparse(path).path
+    if method == 'GET' and pathname == '/api/v1/prompts':
+        return True
+    if method == 'POST' and re.fullmatch(r'/api/v1/prompts/[a-zA-Z0-9_.-]+/(variants|activate)', pathname):
+        return True
+    if method in ('PUT', 'DELETE') and re.fullmatch(r'/api/v1/prompts/[a-zA-Z0-9_.-]+/variants/[a-zA-Z0-9_-]+', pathname):
+        return True
     if method in ('GET', 'PATCH', 'DELETE') and pathname == '/api/v1/quiet-mode':
         return True
     if method in ('GET', 'DELETE') and pathname == '/api/v1/memory':

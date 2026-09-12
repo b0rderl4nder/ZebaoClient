@@ -24,6 +24,11 @@ async function main() {
         }
         // Never capture personal memory in screenshot artifacts.
         if (new URL(route.request().url()).pathname === '/operator-api/api/v1/memory') return route.fulfill({ json: { facts: [{ id: 'fixture-1', text: '验收示例记忆（模拟）', createdAt: '' }] } })
+        // Prompt bodies can contain administrator content. Render a declared fixture instead.
+        if (new URL(route.request().url()).pathname === '/operator-api/api/v1/prompts') {
+          const base = { category: '对话', description: '截图验收模拟内容，不是设备实际提示词。', editable: true, used_by: ['语音会话'], variables: ['context'], max_chars: 800, apply_mode: 'hot_reconnect', default_text: '请结合当前场景回答问题。\n{context}\n（模拟内容）', effective_text: '请结合当前场景回答问题。\n{context}\n（模拟内容）', active_variant_id: 'default', variants: [] }
+          return route.fulfill({ json: { ok: true, persistent: true, slots: [{ ...base, id: 'conversation.aliyun_native_omni', name: '云端原生对话（模拟）' }, { ...base, id: 'vision.explicit', name: '视觉理解（模拟）', category: '视觉' }, { ...base, id: 'platform.dialogue', name: '平台托管（模拟）', editable: false }] } })
+        }
         // Local asset preview only: emulate the tested fixed-upstream transport.
         // Deployed verification uses the real Client proxy with no interception.
         if (base.includes('127.0.0.1') && new URL(route.request().url()).pathname.startsWith('/operator-api/')) {
@@ -50,6 +55,10 @@ async function main() {
         ['capabilities-deleted', '/dashboard/foundation/capabilities', '.catalog-list'],
         ['quiet', '/dashboard/foundation/quiet', '.settings-current strong'],
         ['memory-fixture', '/dashboard/foundation/memory', '.scene-history-row'],
+        ['prompts-list-fixture', '/dashboard/foundation/prompts', '.prompt-list button'],
+        ['prompts-detail-fixture', '/dashboard/foundation/prompts?slot=conversation.aliyun_native_omni', '.prompt-editor h2'],
+        ['prompts-edit-fixture', '/dashboard/foundation/prompts?slot=conversation.aliyun_native_omni', '.prompt-editor h2'],
+        ['prompts-readonly-fixture', '/dashboard/foundation/prompts?slot=platform.dialogue', '.prompt-editor h2'],
         ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
         ['voice', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['voice-edit', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
@@ -131,6 +140,7 @@ async function main() {
           await page.getByRole('button', { name: '开机启动', exact: true }).click()
           await page.getByLabel('开机后自动启动 App').waitFor()
         }
+        if (name === 'prompts-edit-fixture') await page.getByRole('button', { name: '复制此版本', exact: true }).click()
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
         const violations = await page.evaluate(async () => (await axe.run(document.body, { rules: { region: { enabled: false } } })).violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.target) })))
         const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, height: innerHeight, documentHeight: document.documentElement.scrollHeight }))
@@ -147,6 +157,14 @@ async function main() {
         results.push({ name, width, height, dimensions, violations })
         if (name === 'motion-parameters' && width <= 820) {
           await page.getByRole('button', { name: '恢复设备推荐值', exact: true }).scrollIntoViewIfNeeded()
+          await page.screenshot({ path: path.join(output, `${name}-bottom-${width}.png`) })
+        }
+        if (name === 'prompts-edit-fixture' && width <= 820) {
+          const save = page.getByRole('button', { name: '保存版本', exact: true })
+          await save.scrollIntoViewIfNeeded()
+          const bounds = await save.boundingBox()
+          const nav = await page.locator('.client-shell__mobile-nav').boundingBox()
+          if (!bounds || nav && bounds.y + bounds.height > nav.y) failures.push(`prompt save obscured/${width}`)
           await page.screenshot({ path: path.join(output, `${name}-bottom-${width}.png`) })
         }
       }

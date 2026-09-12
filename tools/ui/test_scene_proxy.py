@@ -82,6 +82,12 @@ class SceneProxyTests(unittest.TestCase):
         for path in ['/api/v1/scenes/quiet/revisions/rev%2f1/restore', '/api/v1/scenes/quiet/revisions/rev_1/delete']:
             self.assertEqual(self.request(path, 'POST')[0], 403)
 
+    def test_prompt_variant_endpoints_are_bounded_and_preserve_payloads(self):
+        for method, path in [('GET', '/api/v1/prompts'), ('POST', '/api/v1/prompts/conversation.aliyun_native_omni/variants'), ('POST', '/api/v1/prompts/conversation.aliyun_native_omni/activate'), ('PUT', '/api/v1/prompts/conversation.aliyun_native_omni/variants/custom-1'), ('DELETE', '/api/v1/prompts/conversation.aliyun_native_omni/variants/custom-1')]:
+            self.assertEqual(self.request(path, method)[0], 200)
+        for method, path in [('DELETE', '/api/v1/prompts'), ('POST', '/api/v1/prompts/conversation.aliyun_native_omni/execute'), ('PUT', '/api/v1/prompts/conversation%2fother/variants/custom-1')]:
+            self.assertEqual(self.request(path, method)[0], 403)
+
     def test_capability_memory_quiet_contracts_are_bounded(self):
         for method, path in [('PATCH', '/api/v1/scenes/global'), ('DELETE', '/api/v1/capabilities/tool'), ('POST', '/api/v1/capabilities/tool/restore'), ('GET', '/api/v1/quiet-mode'), ('PATCH', '/api/v1/quiet-mode'), ('DELETE', '/api/v1/quiet-mode'), ('GET', '/api/v1/memory'), ('DELETE', '/api/v1/memory/fact-1'), ('DELETE', '/api/v1/memory')]:
             self.assertEqual(self.request(path, method)[0], 200)

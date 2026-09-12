@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { readVoiceActivation, readVoiceCatalog, readVoiceRuntime, saveNativeConnection, saveVoiceDefault, updateVoiceActivation, voiceName, type VoiceActivation, type VoiceCatalog } from '../../api/voiceSettings'
 import type { SceneRuntimeSnapshot } from '../../api/sceneRuntime'
+import { useFormNavigationGuard } from '../../hooks/useFormNavigationGuard'
 import './settings.css'
 
 const states: Record<string, string> = { inactive: '待唤醒', awaiting_tail: '正在收听', active: '已激活', retiring: '正在退出' }
@@ -20,7 +21,10 @@ export default function VoiceSettings({ simulated = false }: { simulated?: boole
   const [connection, setConnection] = useState({ model: '', voice: '', endpoint: '', key: '' })
   const [editing, setEditing] = useState(false)
   const [revision, setRevision] = useState(0)
+  const lock = useRef(false)
   const dirty = editing || Boolean(catalog && selected !== catalog.shared_voice_pipeline_provider)
+  useFormNavigationGuard(Boolean(busy), dirty)
+  const promptSlot = ({ aliyun_native_omni: 'conversation.aliyun_native_omni', cloud_omni: 'conversation.cloud_omni', local_omni: 'conversation.local_omni', platform_ws: 'conversation.composed_policy' } as Record<string, string>)[runtime?.voice?.provider || '']
   const read = useCallback(async (signal?: AbortSignal) => {
     const [next, snapshot] = await Promise.all([readVoiceCatalog(signal), readVoiceRuntime(signal)])
     if (!signal?.aborted) { setCatalog(next); setRuntime(snapshot); setSelected(next.shared_voice_pipeline_provider) }
@@ -43,18 +47,11 @@ export default function VoiceSettings({ simulated = false }: { simulated?: boole
     void readActivation(controller.signal)
     return () => controller.abort()
   }, [simulated, read, readActivation, revision])
-  useEffect(() => {
-    if (!dirty) return
-    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
-    const leave = (event: MouseEvent) => {
-      if ((event.target as Element)?.closest?.('a') && !window.confirm('还有未保存的修改，确定离开？')) { event.preventDefault(); event.stopPropagation() }
-    }
-    window.addEventListener('beforeunload', warn); document.addEventListener('click', leave, true)
-    return () => { window.removeEventListener('beforeunload', warn); document.removeEventListener('click', leave, true) }
-  }, [dirty])
   const run = async (id: string, action: () => Promise<void>) => {
+    if (lock.current) return
+    lock.current = true
     setBusy(id); setNotice(''); setError('')
-    try { await action() } catch (reason) { setError(message(reason)) } finally { setBusy('') }
+    try { await action() } catch (reason) { setError(message(reason)) } finally { lock.current = false; setBusy('') }
   }
   const saveDefault = () => run('default', async () => {
     const current = await readVoiceCatalog()
@@ -86,7 +83,7 @@ export default function VoiceSettings({ simulated = false }: { simulated?: boole
     if (!confirmed.aliyun_native_omni?.configured || (connection.voice.trim() && confirmed.aliyun_native_omni.voice !== connection.voice.trim()) || (connection.model.trim() && confirmed.aliyun_native_omni.model !== connection.model.trim())) throw new Error('连接保存请求已提交，但尚未确认。请重新读取后检查。')
     setCatalog(confirmed); setEditing(false); setNotice('连接已保存，空闲时刷新；这不代表云端连接已验证。')
   })
-  const refresh = () => { if (!dirty || window.confirm('重新读取将放弃未保存修改，继续？')) { setEditing(false); setError(''); setNotice(''); setRevision(value => value + 1) } }
+  const refresh = () => { if (!dirty || window.confirm('重新读取将放弃未保存修改，继续？')) { setEditing(false); setConnection({ model: '', voice: '', endpoint: '', key: '' }); setError(''); setNotice(''); setRevision(value => value + 1) } }
   return <div className="workspace-page native-settings">
     <header className="product-header"><div><Link className="workspace-back" to="/dashboard/foundation">← 基础系统</Link><h1>语音与唤醒</h1><p>系统设默认，场景可单独选择。</p></div><button disabled={Boolean(busy) || simulated} onClick={refresh}>重新读取</button></header>
     <div className="workspace-body">
@@ -94,12 +91,13 @@ export default function VoiceSettings({ simulated = false }: { simulated?: boole
       {notice && <p className="settings-notice" role="status">{notice}</p>}
       {simulated ? <p className="workspace-empty">连接机器人后配置语音。</p> : !catalog ? !error && <p role="status">正在读取语音设置</p> : <>
         <section className="settings-current" aria-label="当前语音链路"><div><span>{runtime?.scene?.name || '当前场景待确认'}</span><strong>{voiceName(runtime?.voice?.provider, runtime?.voice?.label)}</strong></div><Link to="/dashboard/scenes">调整场景选择 →</Link></section>
+        <div className="settings-related">{promptSlot && <Link to={`/dashboard/foundation/prompts?slot=${encodeURIComponent(promptSlot)}`}>当前链路提示词 →</Link>}<Link to="/dashboard/foundation/sound">麦克风与音量 →</Link></div>
         <section className="settings-section" aria-labelledby="default-voice-heading"><h2 id="default-voice-heading">系统默认链路</h2><p>只影响选择“跟随系统”的场景。</p>
           <div className="settings-choices" role="group" aria-label="系统默认链路">{(catalog.provider_mount_catalog?.voice_profiles || []).filter(item => item.id !== 'shared').map(item => <button key={item.id} aria-pressed={selected === (item.provider || item.id)} disabled={Boolean(busy)} onClick={() => setSelected(item.provider || item.id)}><strong>{voiceName(item.provider || item.id, item.name)}</strong><span>{selected === (item.provider || item.id) ? '已选择' : item.id === 'cloud_omni' || item.id === 'local_omni' ? '保留链路' : '选择'}</span></button>)}</div>
           {!catalog.provider_mount_catalog?.voice_profiles?.length && <p role="status">服务未返回可选链路，无法切换。</p>}
           <div className="settings-actions"><span>{selected !== catalog.shared_voice_pipeline_provider ? '尚未保存' : `当前默认：${voiceName(catalog.shared_voice_pipeline_provider)}`}</span><button className="workspace-primary" disabled={Boolean(busy) || !selected || selected === catalog.shared_voice_pipeline_provider} onClick={() => void saveDefault()}>{busy === 'default' ? '保存中' : '保存默认链路'}</button></div>
         </section>
-        <section className="settings-section" aria-labelledby="native-connection-heading"><div className="settings-row"><div><h2 id="native-connection-heading">云端 Omni 连接</h2><p>{catalog.aliyun_native_omni?.configured ? `音色 ${catalog.aliyun_native_omni.voice || '待确认'}` : '尚未配置'}</p></div>{!editing && <button disabled={Boolean(busy)} onClick={editConnection}>编辑连接与音色</button>}</div>
+        <section className="settings-section" aria-labelledby="native-connection-heading"><div className="settings-row"><div><h2 id="native-connection-heading">云端 Omni · 独立连接设置</h2><p>{catalog.aliyun_native_omni?.configured ? `音色 ${catalog.aliyun_native_omni.voice || '待确认'}` : '尚未配置'} · 不适用于本地、平台或云端兼容链路</p></div>{!editing && <button disabled={Boolean(busy)} onClick={editConnection}>编辑连接与音色</button>}</div>
           {editing && <form onSubmit={event => { event.preventDefault(); void saveConnection() }}><div className="settings-fields">
             <label>音色<input value={connection.voice} disabled={Boolean(busy)} onChange={event => setConnection({ ...connection, voice: event.target.value })} placeholder="服务支持的音色名称"/></label>
             <label>模型<input value={connection.model} disabled={Boolean(busy)} onChange={event => setConnection({ ...connection, model: event.target.value })}/></label>

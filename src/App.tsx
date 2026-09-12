@@ -22,6 +22,7 @@ const StorageSettings = lazy(() => import('./features/foundation/StorageSettings
 const CapabilityCatalog = lazy(() => import('./features/foundation/CapabilityCatalog'))
 const QuietSettings = lazy(() => import('./features/foundation/QuietSettings'))
 const MemorySettings = lazy(() => import('./features/foundation/MemorySettings'))
+const PromptSettings = lazy(() => import('./features/foundation/PromptSettings'))
 const People = lazy(() => import('./features/people/People'))
 const PersonDetail = lazy(() => import('./features/people/PersonDetail'))
 const EmbodiedInteractionControl = lazy(() => import('./features/embodied/EmbodiedInteractionControl'))
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="foundation/capabilities" element={<Page><CapabilityCatalog simulated={simulated}/></Page>} />
         <Route path="foundation/quiet" element={<Page><QuietSettings simulated={simulated}/></Page>} />
         <Route path="foundation/memory" element={<Page><MemorySettings simulated={simulated}/></Page>} />
+        <Route path="foundation/prompts" element={<Page><PromptSettings simulated={simulated}/></Page>} />
         <Route path="foundation/people" element={<Page><People simulated={simulated}/></Page>} />
         <Route path="foundation/people/:id" element={<Page><PersonDetail simulated={simulated}/></Page>} />
         <Route path="foundation/interaction" element={<Page><EmbodiedInteractionControl simulated={simulated}/></Page>} />

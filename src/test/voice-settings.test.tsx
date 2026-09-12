@@ -42,6 +42,8 @@ describe('Client 内语音配置', () => {
     const { request } = backend(); show()
     expect(await screen.findByText('当前默认：平台链路')).toBeInTheDocument()
     expect(screen.getByLabelText('当前语音链路')).toHaveTextContent('云端 Omni')
+    expect(screen.getByRole('link', { name: '当前链路提示词 →' })).toHaveAttribute('href', '/dashboard/foundation/prompts?slot=conversation.aliyun_native_omni')
+    expect(screen.getByText(/不适用于本地、平台或云端兼容链路/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /平台链路/ })).toHaveAttribute('aria-pressed', 'true')
     expect(request.mock.calls.every(call => !call[1]?.method)).toBe(true)
     expect(screen.queryByText('共享语音配置')).not.toBeInTheDocument()
