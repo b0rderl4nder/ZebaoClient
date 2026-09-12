@@ -82,6 +82,12 @@ class SceneProxyTests(unittest.TestCase):
         for path in ['/api/v1/scenes/quiet/revisions/rev%2f1/restore', '/api/v1/scenes/quiet/revisions/rev_1/delete']:
             self.assertEqual(self.request(path, 'POST')[0], 403)
 
+    def test_capability_memory_quiet_contracts_are_bounded(self):
+        for method, path in [('PATCH', '/api/v1/scenes/global'), ('DELETE', '/api/v1/capabilities/tool'), ('POST', '/api/v1/capabilities/tool/restore'), ('GET', '/api/v1/quiet-mode'), ('PATCH', '/api/v1/quiet-mode'), ('DELETE', '/api/v1/quiet-mode'), ('GET', '/api/v1/memory'), ('DELETE', '/api/v1/memory/fact-1'), ('DELETE', '/api/v1/memory')]:
+            self.assertEqual(self.request(path, method)[0], 200)
+        self.assertEqual(self.request('/api/v1/memory', 'POST', b'{}')[0], 403)
+        self.assertEqual(self.request('/api/v1/capabilities/tool/execute', 'POST', b'{}')[0], 403)
+
     def test_only_scene_endpoints_and_no_arbitrary_upstream(self):
         for path in ['/api/v1/settings', '/api/move/goto', '//example.com', '/api/v1/scenes/../../settings', '/api/v1/scenes/foo%2fbar']:
             self.assertEqual(self.request(path, 'PUT', b'{}')[0], 403)

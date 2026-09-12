@@ -22,6 +22,8 @@ async function main() {
           failures.push(`unexpected write ${route.request().method()}`)
           return route.abort()
         }
+        // Never capture personal memory in screenshot artifacts.
+        if (new URL(route.request().url()).pathname === '/operator-api/api/v1/memory') return route.fulfill({ json: { facts: [{ id: 'fixture-1', text: '验收示例记忆（模拟）', createdAt: '' }] } })
         // Local asset preview only: emulate the tested fixed-upstream transport.
         // Deployed verification uses the real Client proxy with no interception.
         if (base.includes('127.0.0.1') && new URL(route.request().url()).pathname.startsWith('/operator-api/')) {
@@ -42,6 +44,12 @@ async function main() {
         ['scene-create', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['scene-history', '/dashboard/scenes', '[aria-label="场景配置"]'],
         ['foundation', '/dashboard/foundation', '[aria-label="查找设置"], input[type="search"]'],
+        ['capabilities-global', '/dashboard/foundation/capabilities', '.catalog-list'],
+        ['capabilities-detail', '/dashboard/foundation/capabilities', '.catalog-list'],
+        ['capabilities-scene', '/dashboard/foundation/capabilities', '.catalog-list'],
+        ['capabilities-deleted', '/dashboard/foundation/capabilities', '.catalog-list'],
+        ['quiet', '/dashboard/foundation/quiet', '.settings-current strong'],
+        ['memory-fixture', '/dashboard/foundation/memory', '.scene-history-row'],
         ['interaction', '/dashboard/foundation/interaction', 'select[aria-label="当前场景活跃度"]'],
         ['voice', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
         ['voice-edit', '/dashboard/foundation/voice', '[aria-label="系统默认链路"]'],
@@ -70,6 +78,10 @@ async function main() {
           throw error
         }
         if (name === 'scene-profiles') await page.getByRole('button', { name: '语音与交互', exact: true }).click()
+        if (name === 'capabilities-detail') await page.locator('.catalog-list > details > summary').first().click()
+        if (name === 'capabilities-scene') await page.getByRole('button', { name: '场景能力', exact: true }).click()
+        if (name === 'capabilities-deleted') await page.getByRole('button', { name: '已删除', exact: true }).click()
+        if (name === 'quiet') await page.waitForFunction(() => !document.querySelector('.settings-current strong')?.textContent.includes('等待读取'))
         if (name === 'scene-resources') await page.getByRole('button', { name: '知识与展示', exact: true }).click()
         if (name === 'scene-create') {
           await page.getByRole('button', { name: '新建场景', exact: true }).click()

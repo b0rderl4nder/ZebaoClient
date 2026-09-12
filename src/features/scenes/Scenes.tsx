@@ -188,7 +188,7 @@ export default function Scenes({ simulated = false }: { simulated?: boolean }) {
           <div className="scene-more"><button aria-expanded={showHistory} onClick={() => setShowHistory(value => !value)}>历史版本 {showHistory ? '−' : '+'}</button>{showHistory && <SceneHistory key={selected} sceneId={selected} busy={Boolean(busy)} restore={restore}/>}</div>
         </section> : !creating && !error && <p role="status">{selected ? '正在读取配置' : loaded ? '还没有场景，点击“新建场景”开始。' : '正在读取场景'}</p>}
       </div>}
-      {!simulated && <details className="scene-more"><summary>更多管理</summary><nav className="workspace-footer-links"><a href={operatorPage(`scene?id=${encodeURIComponent(selected)}`)} target="_blank" rel="noreferrer">流程与高级参数 ↗</a><a href={operatorPage('capabilities')} target="_blank" rel="noreferrer">全局能力 ↗</a><Link to="/dashboard/foundation/people">人员与权限 →</Link></nav></details>}
+      {!simulated && <details className="scene-more"><summary>更多管理</summary><nav className="workspace-footer-links"><a href={operatorPage(`scene?id=${encodeURIComponent(selected)}`)} target="_blank" rel="noreferrer">流程与高级参数 ↗</a><Link to="/dashboard/foundation/capabilities">全局能力与目录 →</Link><Link to="/dashboard/foundation/people">人员与权限 →</Link></nav></details>}
     </div>
   </div>
 }

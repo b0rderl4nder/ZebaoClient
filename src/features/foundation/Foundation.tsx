@@ -10,6 +10,9 @@ const sections = [
     { name: '语音与唤醒', note: '默认链路 · 音色 · 唤醒', local: '/dashboard/foundation/voice', route: '' },
     { name: '视觉', note: '环境观察 · 主动开口', local: '/dashboard/foundation/vision', route: '' },
     { name: '人员与身份', note: '人脸 · 声纹 · 能力权限', local: '/dashboard/foundation/people', route: '' },
+    { name: '定时静默', note: '暂时安静 · 提前结束', local: '/dashboard/foundation/quiet', route: '' },
+    { name: '长期记忆', note: '查找 · 删除已保存记忆', local: '/dashboard/foundation/memory', route: '' },
+    { name: '能力管理', note: '全局总开关 · 可用目录', local: '/dashboard/foundation/capabilities', route: '' },
   ] },
   { title: '设备与连接', items: [
     { name: '声音', note: '麦克风 · 音量', local: '/dashboard/foundation/sound', route: '' },

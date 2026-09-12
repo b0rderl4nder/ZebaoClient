@@ -20,6 +20,18 @@ MAX_BODY = 1024 * 1024
 def allowed_scene_request(method: str, path: str) -> bool:
     """Fixed local upstream and explicitly supported configuration contracts."""
     pathname = urlparse(path).path
+    if method in ('GET', 'PATCH', 'DELETE') and pathname == '/api/v1/quiet-mode':
+        return True
+    if method in ('GET', 'DELETE') and pathname == '/api/v1/memory':
+        return True
+    if method == 'DELETE' and re.fullmatch(r'/api/v1/memory/[a-zA-Z0-9_-]+', pathname):
+        return True
+    if method == 'PATCH' and pathname == '/api/v1/scenes/global':
+        return True
+    if method == 'DELETE' and re.fullmatch(r'/api/v1/capabilities/[a-zA-Z0-9_-]+', pathname):
+        return True
+    if method == 'POST' and re.fullmatch(r'/api/v1/capabilities/[a-zA-Z0-9_-]+/restore', pathname):
+        return True
     voice_endpoints = {
         'GET': {'/api/v1/ui/scenes', '/api/v1/ui/runtime', '/api/v1/scenes', '/api/v1/settings/voice-activation'},
         'PATCH': {'/api/v1/scenes/voice-pipeline', '/api/v1/settings/voice-activation'},
