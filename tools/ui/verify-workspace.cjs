@@ -54,6 +54,11 @@ async function main() {
         ['person-identity', '/dashboard/foundation/people', '.people-directory a'],
         ['person-greeting', '/dashboard/foundation/people', '.people-directory a'],
         ['person-enroll', '/dashboard/foundation/people', '.people-directory a'],
+        ['network', '/dashboard/foundation/network', '.network-tabs'],
+        ['network-wifi', '/dashboard/foundation/network', '.network-tabs'],
+        ['network-iot', '/dashboard/foundation/network', '.network-tabs'],
+        ['network-startup', '/dashboard/foundation/network', '.network-tabs'],
+        ['storage', '/dashboard/foundation/storage', '.settings-current'],
       ]) {
         await page.goto(base + route)
         try { await page.locator(ready).first().waitFor({ timeout: 15000 }) }
@@ -86,6 +91,22 @@ async function main() {
             await page.getByRole('button', { name: /^(补录|录入)声纹$/ }).click()
             await page.getByRole('button', { name: '录入当前句', exact: true }).waitFor()
           }
+        }
+        if (name === 'network' || name === 'network-wifi') {
+          await page.waitForFunction(() => {
+            const section = document.querySelector('[aria-label="网络连接"]')
+            return section && !section.textContent.includes('正在读取')
+          })
+          if (name === 'network-wifi') await page.getByText('连接或更换 Wi-Fi', { exact: true }).click()
+        }
+        if (name === 'network-iot') {
+          await page.getByRole('button', { name: '物联网', exact: true }).click()
+          await page.getByLabel('启用物联网服务').waitFor()
+          await page.getByText('编辑地址与凭据', { exact: true }).click()
+        }
+        if (name === 'network-startup') {
+          await page.getByRole('button', { name: '开机启动', exact: true }).click()
+          await page.getByLabel('开机后自动启动 App').waitFor()
         }
         await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
         const violations = await page.evaluate(async () => (await axe.run(document.body, { rules: { region: { enabled: false } } })).violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.target) })))

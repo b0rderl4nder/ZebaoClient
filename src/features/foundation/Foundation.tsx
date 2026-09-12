@@ -13,8 +13,8 @@ const sections = [
   ] },
   { title: '设备与连接', items: [
     { name: '声音', note: '麦克风 · 音量', local: '/dashboard/foundation/sound', route: '' },
-    { name: '网络与物联网', note: 'Wi-Fi · 提供方连接', route: 'device/network' },
-    { name: '存储', note: '空间 · 运行数据', route: 'device/storage' },
+    { name: '网络与连接', note: 'Wi-Fi · 物联网 · 自启', local: '/dashboard/foundation/network', route: '' },
+    { name: '存储', note: '磁盘空间 · 可用余量', local: '/dashboard/foundation/storage', route: '' },
   ] },
   { title: '工程工具', items: [
     { name: '物理仿真', note: '实体镜像 · 动作验证', local: '/dashboard/simulation', route: '' },

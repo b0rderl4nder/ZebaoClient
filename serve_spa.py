@@ -35,6 +35,16 @@ def allowed_scene_request(method: str, path: str) -> bool:
     }
     if pathname in device_endpoints.get(method, set()):
         return True
+    connection_endpoints = {
+        'GET': {'/api/v1/network/wifi', '/api/v1/home-assistant', '/api/v1/app_autostart', '/api/v1/demo-readiness'},
+        'POST': {'/api/v1/network/wifi/scan', '/api/v1/network/wifi/connect', '/api/v1/network/hotspot', '/api/v1/home-assistant/probe', '/api/v1/app_autostart'},
+        'PATCH': {'/api/v1/home-assistant'},
+    }
+    if pathname in connection_endpoints.get(method, set()):
+        return True
+    if method == 'DELETE' and re.fullmatch(r'/api/v1/network/wifi/[^/]+', pathname):
+        ssid = unquote(pathname.rsplit('/', 1)[1])
+        return bool(ssid.strip()) and len(ssid.encode('utf-8')) <= 32 and not any(ord(char) < 32 for char in ssid) and '/' not in ssid
     people_endpoints = {
         'GET': {'/api/v1/people', '/api/v1/people/import-candidates', '/api/v1/voiceprints/enrollment-prompts'},
         'POST': {'/api/v1/people', '/api/v1/people/import', '/api/v1/voiceprints/register'},
@@ -124,6 +134,8 @@ class SPARequestHandler(SimpleHTTPRequestHandler):
                 # Device capture and remote validation have bounded existing API durations.
                 pathname = urlparse(path).path
                 timeout = 40 if pathname == '/api/v1/voiceprints/register' else 22 if pathname == '/api/v1/debug/mic_capture_asr' else 12 if pathname in ('/api/v1/people/import-candidates', '/api/v1/people/import') else 7
+                if pathname.startswith('/api/v1/network/') or pathname.startswith('/api/v1/home-assistant'):
+                    timeout = 25
                 response = opener.open(request, timeout=timeout)
             except HTTPError as error:
                 response = error

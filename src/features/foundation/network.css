@@ -1,0 +1,13 @@
+.native-settings .network-tabs { display:flex; gap:20px; border-bottom:1px solid #3b3730; }
+.native-settings .network-tabs button { border:0; border-radius:0; padding:12px 2px; }
+.native-settings .network-tabs button[aria-pressed=true] { color:#e6aa5e; border-bottom:2px solid #e6aa5e; }
+.network-fields { border:0; padding:0; margin:0; min-width:0; }
+.network-fields > button { margin-top:18px; }
+.network-item { display:flex; gap:18px; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #3b3730; }
+.network-item span { overflow-wrap:anywhere; font-size:13px; }
+.network-item button { flex-shrink:0; }
+.network-select { display:grid; gap:8px; margin:18px 0; }
+.network-fields select { min-height:44px; max-width:100%; border:1px solid #51483b; border-radius:10px; padding:10px; background:#191815; color:#eee7dd; }
+.network-zone { margin:12px 0; border-left:2px solid #51483b; padding-left:16px; }
+.network-zone > button { margin:12px 0; }
+@media(max-width:600px) { .native-settings .network-tabs { gap:12px; flex-wrap:wrap; } }

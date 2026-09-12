@@ -136,6 +136,12 @@ class SceneProxyTests(unittest.TestCase):
         for invalid in [capture.replace('seconds=6', 'seconds=60'), capture + '&save=1', capture.replace('purpose=voiceprint_enrollment', 'purpose=debug'), '/api/v1/people/import', '/api/v1/face-identities/mappings/a%2fb']:
             self.assertEqual(self.request(invalid, 'DELETE' if 'mappings' in invalid or invalid.endswith('/import') else 'POST')[0], 403)
 
+    def test_network_configuration_has_no_device_control_proxy(self):
+        for method, path in [('GET', 'network/wifi'), ('POST', 'network/wifi/scan'), ('POST', 'network/wifi/connect'), ('DELETE', 'network/wifi/test-network'), ('POST', 'network/hotspot'), ('GET', 'home-assistant'), ('PATCH', 'home-assistant'), ('POST', 'home-assistant/probe'), ('GET', 'app_autostart'), ('POST', 'app_autostart'), ('GET', 'demo-readiness')]:
+            self.assertEqual(self.request('/api/v1/' + path, method, b'{}' if method != 'GET' else None)[0], 200)
+        for method, path in [('POST', 'home-assistant/control'), ('DELETE', 'network/wifi/a%2fb'), ('POST', 'network/restart'), ('DELETE', 'demo-readiness')]:
+            self.assertEqual(self.request('/api/v1/' + path, method, b'{}')[0], 403)
+
 
 if __name__ == '__main__':
     unittest.main()
