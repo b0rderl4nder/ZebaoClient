@@ -65,6 +65,7 @@ export default function Dashboard({ host, simulated = false }: { host: string; s
   const ready = simulated || stateOnline || backendReady(status)
   const running = simulated || status?.state === 'running'
   const appRunning = app?.state === 'running' || app?.state === 'starting'
+  const runtimeUrl = `http://${host || window.location.hostname || 'localhost'}:7862`
 
   return <div className="dashboard-page">
     <header className="product-header"><div><h1>概览</h1><p>{simulated ? '界面预览' : host || '等待设备'}</p></div><span className={`dashboard-health ${ready ? 'is-online' : ''}`}><i/>{ready ? '设备在线' : '设备离线'}</span></header>
@@ -78,6 +79,10 @@ export default function Dashboard({ host, simulated = false }: { host: string; s
       <section className="dashboard-actions" aria-label="运行工作区">
         <Link to="/dashboard/acceptance"><strong>验收工作台</strong><span>发布、场景代次、自动门禁与真人证据</span></Link>
         <Link to="/dashboard/scenes"><strong>场景运行边界</strong><span>查看当前场景挂载的能力、知识库与展示目标</span></Link>
+      </section>
+      <section className="dashboard-boundary" aria-label="系统职责">
+        <div className="dashboard-boundary__intro"><span>一个机器人，两层职责</span><strong>管理端与运行核心分开，状态从同一快照读取。</strong><p>5173 Client 负责配置、授权和验收；7862 App 负责 Omni、Skill、视觉、动作与真实执行。不要在运行核心里重复维护场景。</p></div>
+        <a href={runtimeUrl} target="_blank" rel="noreferrer"><span>运行核心 · 7862</span><strong>打开只读运行控制台 ↗</strong><small>查看当前会话、具身和执行边界</small></a>
       </section>
       <SceneRuntimeCard simulated={simulated} />
       <EmbodiedInteractionCard simulated={simulated} />

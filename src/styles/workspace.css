@@ -124,10 +124,11 @@
 @media(max-width: 820px) {
   .client-shell { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; height: 100dvh; min-height: 0; padding-bottom: 0; }
   .client-shell__content { position: relative; grid-column: 1; grid-row: 1; overflow-y: auto; min-height: 0; overscroll-behavior-y: contain; }
-  .client-shell__mobile-nav { position: static; grid-column: 1; grid-row: 2; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; border-radius: 0; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+  .client-shell__mobile-nav { position: static; grid-column: 1; grid-row: 2; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0; border-radius: 0; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
   .client-shell__mobile-nav a:not(.is-active) { color: #b9b1a6; }
 }
 @media(max-width: 600px) {
+  .dashboard-boundary { grid-template-columns: 1fr; margin: 12px 18px 0; padding: 16px; }
   .dashboard-page .product-header { padding: 22px 18px; }
   .workspace-page .product-header { padding: 22px 18px; }
   .workspace-body { padding: 0 18px 40px; }

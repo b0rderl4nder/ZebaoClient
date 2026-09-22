@@ -195,6 +195,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .client-shell__content > * > nav:first-child { display: none; }
 .control-page__body > * > nav:first-child { display: none; }
 .client-shell__mobile-nav { display: none; }
+.dashboard-boundary { max-width: 1180px; margin: 14px auto 0; padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, .75fr); gap: 14px; border: 1px solid rgba(231,163,75,.2); border-radius: 16px; background: linear-gradient(135deg, rgba(55,42,25,.42), rgba(25,23,19,.86)); }
+.dashboard-boundary__intro { display: grid; gap: 6px; align-content: center; }
+.dashboard-boundary__intro > span { color: #e7a34b; font-size: 11px; letter-spacing: .08em; }
+.dashboard-boundary__intro strong { color: #f6efe5; font-size: 15px; }
+.dashboard-boundary__intro p { max-width: 720px; margin: 0; color: #b9b1a6; font-size: 12px; line-height: 1.6; }
+.dashboard-boundary > a { min-height: 88px; padding: 16px; display: grid; align-content: center; gap: 5px; border: 1px solid rgba(231,163,75,.26); border-radius: 12px; color: #f1c78f; background: rgba(231,163,75,.06); }
+.dashboard-boundary > a:hover { border-color: #9d7847; background: rgba(231,163,75,.12); }
+.dashboard-boundary > a span, .dashboard-boundary > a small { color: #b9b1a6; font-size: 11px; }
+.dashboard-boundary > a strong { font-size: 13px; }
 .route-loading { min-height: 60vh; display: grid; place-items: center; color: #8e877e; font-size: 13px; }
 
 .discovery-page { min-height: 100vh; padding: 32px 18px; display: grid; place-items: center; }

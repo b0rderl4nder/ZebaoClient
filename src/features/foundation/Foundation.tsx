@@ -14,6 +14,8 @@ const sections = [
     { name: '能力管理', note: '全局总开关 · 可用目录', local: '/dashboard/foundation/capabilities', route: '' },
   ] },
   { title: '设备与连接', items: [
+    { name: '动作与姿态', note: '身体 · 舵机 · 预录动作', local: '/dashboard/control', route: '' },
+    { name: '托管应用', note: '启动 · 停止 · 运行版本', local: '/dashboard/apps', route: '' },
     { name: '声音', note: '麦克风 · 音量', local: '/dashboard/foundation/sound', route: '' },
     { name: '网络与连接', note: 'Wi-Fi · 物联网 · 自启', local: '/dashboard/foundation/network', route: '' },
     { name: '存储', note: '磁盘空间 · 可用余量', local: '/dashboard/foundation/storage', route: '' },

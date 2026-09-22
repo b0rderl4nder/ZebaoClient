@@ -22,9 +22,9 @@ describe('桌面控制端信息架构', () => {
       </MemoryRouter>,
     )
 
-    const desktopNavigation = screen.getByLabelText('设备控制导航')
+    const desktopNavigation = screen.getByLabelText('泽宝管理导航')
     expect(desktopNavigation.querySelectorAll('nav a')).toHaveLength(6)
-    for (const name of ['概览', '验收', '场景', '基础系统', '控制', '应用']) {
+    for (const name of ['概览', '场景', '能力', '人员', '设备', '验收']) {
       expect(screen.getAllByText(name)).toHaveLength(2)
     }
     expect((await axe.run(document.body, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])

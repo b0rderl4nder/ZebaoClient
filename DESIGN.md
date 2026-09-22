@@ -14,6 +14,16 @@ come first; engineering details are available without overwhelming ordinary
 operators. Missing data is visible as missing data, never replaced with a
 default scene or a green success state.
 
+## Surface ownership
+
+There is one operator surface and one runtime surface. The Client at `:5173`
+owns discovery, scene composition, capability mounts, people/permissions,
+device configuration, actions, and acceptance evidence. The App at `:7862`
+owns Omni, Skill execution, vision, embodied interaction, and device readback;
+its browser page is a read-only Runtime Console. Both surfaces read the same
+server-owned scene snapshot. A legacy App route must link or redirect to this
+Client instead of recreating a second settings page.
+
 ## Visual tokens
 
 - Canvas: `#11100e`; primary surface: `#161512`; raised surface: `#191815`.
