@@ -21,4 +21,19 @@
 .diagnostic-stages li { display:flex; justify-content:space-between; align-items:start; gap:20px; padding:10px 0; border-bottom:1px solid #39342d; font-size:14px; }
 .diagnostic-stages li span:last-child { flex-shrink:0; }
 .diagnostic-warning { color:#efb760; }
+.acceptance-guidance { margin:20px 0 24px; padding:18px; border:1px solid #51483b; border-radius:14px; background:#191815; }
+.acceptance-guidance__header { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; }
+.acceptance-guidance h2 { margin:0 0 6px; font-size:18px; }
+.acceptance-guidance h3 { margin:20px 0 8px; font-size:14px; }
+.acceptance-guidance p { margin:0; color:#b9b1a6; font-size:13px; line-height:1.6; }
+.acceptance-guidance__header strong { flex-shrink:0; font-size:13px; font-weight:500; }
+.acceptance-state--ready { color:#83d49a; }
+.acceptance-state--blocked { color:#efb760; }
+.acceptance-guidance__list, .acceptance-guidance__steps { margin:8px 0 0; padding-left:20px; }
+.acceptance-guidance__list { list-style:none; padding-left:0; }
+.acceptance-guidance__list li { display:flex; justify-content:space-between; gap:20px; padding:9px 0; border-bottom:1px solid #39342d; font-size:13px; }
+.acceptance-guidance__list strong { color:#efb760; font-weight:500; flex-shrink:0; }
+.acceptance-guidance__ok { color:#83d49a !important; }
+.acceptance-guidance__progress { margin-top:12px !important; }
+.acceptance-guidance__steps { color:#d9d0c5; font-size:13px; line-height:1.8; }
 @media(max-width:600px) { .diagnostic-facts { grid-template-columns:1fr; } }

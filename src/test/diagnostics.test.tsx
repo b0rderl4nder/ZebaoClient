@@ -84,6 +84,13 @@ it('无验收记录明确未验收，不生成假通过',async()=>{
   expect(screen.queryByText('记录为通过')).not.toBeInTheDocument()
   expect(fetch.mock.calls.every(([,init])=>!init?.method)).toBe(true)
 })
+it('验收页把服务端真人阻断项转成下一步引导，不代填通过',async()=>{
+  backend(url=>url.pathname.endsWith('/demo-readiness')?{ready:false,state:'blocked',blockers:['voice_turn_acceptance'],voice_turn_acceptance:{passed:false,reason:'acceptance_file_missing',completed_count:0,required_count:6}}:{ok:true,runs:[],stages:[],count:0})
+  show(<AcceptanceRecords/>);await screen.findByText(/语音真人验收：需要真人完成/)
+  expect(screen.getByText('等待真人证据')).toBeInTheDocument()
+  expect(screen.getByText(/语音真人验收进度：0\/6/)).toBeInTheDocument()
+  expect(screen.queryByText('记录为通过')).not.toBeInTheDocument()
+})
 it('验收结论使用服务端 passed，不由通过环节数推断',async()=>{
   backend(()=>({ok:true,count:1,stages:[{id:'voice',label:'语音'}],runs:[{run_id:'fixture',recorded_at:'2026-09-12',passed:false,scene:{id:'quiet',generation:'g1'},release:{git_commit:'abc',artifact_sha256:'hash'},voice_mode:'aliyun_native_omni',stages:{voice:true},capability_results:[],device_results:[]}]}))
   show(<AcceptanceRecords/>);await screen.findByText('记录未通过')

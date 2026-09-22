@@ -1,5 +1,5 @@
 import { operatorRequest } from './operator'
-import type { SceneRuntimeSnapshot } from './sceneRuntime'
+import { fetchReadiness, type ReadinessSnapshot, type SceneRuntimeSnapshot } from './sceneRuntime'
 
 const request = <T>(path: string, init: RequestInit = {}) => operatorRequest<T>(`/api/v1${path}`, init, true, 15000)
 export const logCategories: Record<string, string> = { speech:'听取与识别', response:'回答', conversation:'对话', tool:'能力执行', playback:'播报与打断', identity:'身份', vision:'视觉', motion:'动作', system:'系统', service:'服务' }
@@ -73,4 +73,14 @@ export async function readAcceptance(signal?:AbortSignal):Promise<AcceptanceDocu
   const data=await request<AcceptanceDocument>('/acceptance/runs',{signal})
   if (!Array.isArray(data.stages)||!Array.isArray(data.runs)||!Number.isInteger(data.count)||data.runs.some(item=>typeof item.passed!=='boolean'||typeof item.run_id!=='string'||!item.scene||!item.release||!item.stages||!Array.isArray(item.capability_results)||!Array.isArray(item.device_results))) throw new Error('验收记录不完整，请重新读取。')
   return data
+}
+
+/**
+ * The acceptance page is intentionally read-only.  This combines the
+ * release-bound run history with the current readiness projection so the
+ * operator can see what still needs a human observation without inventing a
+ * pass result or executing a device operation.
+ */
+export async function readAcceptanceGuidance(signal?:AbortSignal):Promise<ReadinessSnapshot> {
+  return fetchReadiness(signal)
 }

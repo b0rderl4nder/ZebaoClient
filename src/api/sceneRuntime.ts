@@ -95,6 +95,14 @@ export interface ReadinessSnapshot {
   ready?: boolean
   state?: string
   blockers?: string[]
+  gates?: Record<string, boolean>
+  voice_turn_acceptance?: {
+    passed?: boolean
+    reason?: string
+    completed_count?: number
+    required_count?: number
+    required_items?: Record<string, string>
+  }
 }
 
 export async function fetchSceneRuntime(signal?: AbortSignal): Promise<SceneRuntimeSnapshot> {
