@@ -99,6 +99,16 @@ describe('桌面控制端信息架构', () => {
           }],
         })
       }
+      if (path.endsWith('/ecosystem/health')) {
+        return Response.json({
+          ok: true,
+          release: { app_version: '0.1.421', bound: true },
+          scene: { generation: 'scene-generation' },
+        })
+      }
+      if (path.endsWith('/demo-readiness')) {
+        return Response.json({ ready: false, blockers: ['disk_target'] })
+      }
       return Response.json({ ok: false }, { status: 404 })
     })
     vi.stubGlobal('fetch', request)
@@ -111,6 +121,8 @@ describe('桌面控制端信息架构', () => {
     expect(screen.getByText('设备回读')).toBeInTheDocument()
     expect(screen.getByText('需授权')).toBeInTheDocument()
     expect(screen.getByText(/CapabilityBroker/)).toBeInTheDocument()
+    expect(screen.getByText('0.1.421')).toBeInTheDocument()
+    expect(screen.getByText('可用空间低于建议余量')).toBeInTheDocument()
     vi.unstubAllGlobals()
   })
 })

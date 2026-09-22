@@ -266,6 +266,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .scene-runtime-card__metrics strong { overflow: hidden; color: #dcd4c9; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .scene-runtime-card__mounts, .scene-runtime-card__message { margin: 0; padding: 13px 22px; border-top: 1px solid #302d28; color: #b9b1a6; font-size: 12px; line-height: 1.55; }
 .scene-runtime-card__message { color: #d2a49f; background: #211312; }
+.scene-runtime-card__health { border-top: 1px solid #302d28; }
+.scene-runtime-card__health > header { min-height: 48px; padding: 13px 22px 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.scene-runtime-card__health > header span { color: #b9b1a6; font-size: 11px; }
+.scene-runtime-card__health > header strong { color: #b8cda9; font-size: 12px; font-weight: 600; }
+.scene-runtime-card__health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0 22px 12px; }
+.scene-runtime-card__health-grid > div { min-width: 0; padding: 9px 10px; border: 1px solid #34312c; border-radius: 9px; background: #12110f; }
+.scene-runtime-card__health-grid span { display: block; color: #756e66; font-size: 10px; }
+.scene-runtime-card__health-grid strong { display: block; overflow: hidden; margin-top: 4px; color: #dcd4c9; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.scene-runtime-card__alerts { margin: 0; padding: 0 22px 13px; color: #e7bb7a; font-size: 11px; line-height: 1.5; }
+.scene-runtime-card__alerts span { margin-right: 8px; color: #a99378; }
 .scene-runtime-card__skills { border-top: 1px solid #302d28; }
 .scene-runtime-card__skills > header { min-height: 48px; padding: 13px 22px 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .scene-runtime-card__skills > header span { color: #b9b1a6; font-size: 11px; }
@@ -405,6 +415,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .scene-runtime-card__metrics > div { min-height: 58px; border-right: 0; border-bottom: 1px solid #302d28; }
   .scene-runtime-card__metrics > div:last-child { border-bottom: 0; }
   .scene-runtime-card__skill-list { grid-template-columns: 1fr; }
+  .scene-runtime-card__health-grid { grid-template-columns: 1fr; }
   .embodied-card__metrics { grid-template-columns: 1fr; }
   .embodied-card__metrics > div { min-height: 58px; border-right: 0; border-bottom: 1px solid #302d28; }
   .embodied-card__metrics > div:last-child { border-bottom: 0; }

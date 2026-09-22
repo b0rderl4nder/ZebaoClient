@@ -69,12 +69,48 @@ export interface SkillRegistrySnapshot {
   execution_boundary?: string
 }
 
+/** A redacted ecosystem health projection safe for the operator overview. */
+export interface EcosystemHealthSnapshot {
+  ok: boolean
+  release?: {
+    app_version?: string
+    git_commit?: string
+    artifact_sha256?: string
+    bound?: boolean
+  }
+  scene?: { id?: string; name?: string; generation?: string }
+  voice?: { provider?: string; configured?: boolean }
+  capabilities?: { count?: number; ids?: string[] }
+  skills?: { count?: number; generation?: string }
+  boundaries?: {
+    mcp_tools_list?: boolean
+    mcp_tools_call?: boolean
+    public_internet_execution?: boolean
+    device_writes?: string
+  }
+}
+
+/** Readiness is an acceptance/operations projection, not a device executor. */
+export interface ReadinessSnapshot {
+  ready?: boolean
+  state?: string
+  blockers?: string[]
+}
+
 export async function fetchSceneRuntime(signal?: AbortSignal): Promise<SceneRuntimeSnapshot> {
   return operatorRequest('/api/v1/ui/runtime', { signal })
 }
 
 export async function fetchSkillRegistry(signal?: AbortSignal): Promise<SkillRegistrySnapshot> {
   return operatorRequest('/api/v1/ecosystem/skills', { signal })
+}
+
+export async function fetchEcosystemHealth(signal?: AbortSignal): Promise<EcosystemHealthSnapshot> {
+  return operatorRequest('/api/v1/ecosystem/health', { signal })
+}
+
+export async function fetchReadiness(signal?: AbortSignal): Promise<ReadinessSnapshot> {
+  return operatorRequest('/api/v1/demo-readiness', { signal })
 }
 
 export interface SceneSummary {

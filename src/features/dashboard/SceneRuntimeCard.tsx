@@ -2,10 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { voiceName } from '../../api/voiceSettings'
 import {
+  fetchEcosystemHealth,
+  fetchReadiness,
   fetchSkillRegistry,
   fetchSceneRuntime,
+  type EcosystemHealthSnapshot,
   type SkillManifest,
   type SkillRegistrySnapshot,
+  type ReadinessSnapshot,
   type SceneRuntimeSnapshot,
 } from '../../api/sceneRuntime'
 
@@ -31,6 +35,18 @@ function contractLabel(value: string | undefined, fallback: string) {
   return labels[String(value || '').trim()] || fallback
 }
 
+function blockerLabel(value: string) {
+  const labels: Record<string, string> = {
+    voiceprint_acceptance: '声纹真人验收未完成',
+    voice_turn_acceptance: '语音真人验收未完成',
+    disk_target: '可用空间低于建议余量',
+    barge_in_proven: '打断能力尚未取证',
+    field_network: '现场网络未确认',
+    release_bound: '运行构件未绑定',
+  }
+  return labels[value] || value
+}
+
 /**
  * Shows only the active SceneManager snapshot. It never invents a default
  * scene or a Client-side capability list when the runtime is unavailable.
@@ -38,15 +54,21 @@ function contractLabel(value: string | undefined, fallback: string) {
 export default function SceneRuntimeCard({ simulated = false }: { simulated?: boolean }) {
   const [runtime, setRuntime] = useState<SceneRuntimeSnapshot | null>(null)
   const [skills, setSkills] = useState<SkillRegistrySnapshot | null>(null)
+  const [health, setHealth] = useState<EcosystemHealthSnapshot | null>(null)
+  const [readiness, setReadiness] = useState<ReadinessSnapshot | null>(null)
   const [error, setError] = useState('')
   const [skillError, setSkillError] = useState('')
+  const [healthError, setHealthError] = useState('')
 
   useEffect(() => {
     if (simulated) {
       setRuntime(null)
       setSkills(null)
+      setHealth(null)
+      setReadiness(null)
       setError('预览模式未连接机器人，不显示虚构的场景或能力。')
       setSkillError('')
+      setHealthError('')
       return
     }
     let cancelled = false
@@ -55,9 +77,11 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
       controller?.abort()
       controller = new AbortController()
       try {
-        const [runtimeResult, skillResult] = await Promise.allSettled([
+        const [runtimeResult, skillResult, healthResult, readinessResult] = await Promise.allSettled([
           fetchSceneRuntime(controller.signal),
           fetchSkillRegistry(controller.signal),
+          fetchEcosystemHealth(controller.signal),
+          fetchReadiness(controller.signal),
         ])
         if (runtimeResult.status === 'rejected') throw runtimeResult.reason
         const next = runtimeResult.value
@@ -71,14 +95,26 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
             setSkills(null)
             setSkillError(skillResult.reason instanceof Error ? skillResult.reason.message : '暂时无法读取')
           }
+          if (healthResult.status === 'fulfilled') {
+            setHealth(healthResult.value)
+            setHealthError('')
+          } else {
+            setHealth(null)
+            setHealthError(healthResult.reason instanceof Error ? healthResult.reason.message : '暂时无法读取')
+          }
+          if (readinessResult.status === 'fulfilled') setReadiness(readinessResult.value)
+          else setReadiness(null)
         }
       } catch (reason) {
         const aborted = reason instanceof Error && reason.name === 'AbortError'
         if (!cancelled && !aborted) {
           setRuntime(null)
           setSkills(null)
+          setHealth(null)
+          setReadiness(null)
           setError(reason instanceof Error ? reason.message : '场景运行时暂不可读')
           setSkillError('')
+          setHealthError('')
         }
       }
     }
@@ -112,6 +148,12 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
     Array.isArray(skills?.skills) ? skills.skills.filter(item => item && item.skill_id).slice(0, 12) : []
   ), [skills])
 
+  const blockers = useMemo(() => (
+    Array.isArray(readiness?.blockers)
+      ? readiness.blockers.filter(item => String(item || '').trim()).slice(0, 3).map(blockerLabel)
+      : []
+  ), [readiness])
+
   return (
     <section className="scene-runtime-card" aria-label="当前场景运行时">
       <header className="scene-runtime-card__header">
@@ -135,6 +177,24 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
               {summary.capabilityNames.join(' · ')}
             </p>
           )}
+          <section className="scene-runtime-card__health" aria-label="发布与健康">
+            <header><span>发布与健康</span><strong>{health?.ok ? '运行态正常' : healthError ? '健康信息暂不可读' : '读取中'}</strong></header>
+            {healthError ? (
+              <p className="scene-runtime-card__message" role="status">健康摘要暂不可读：{healthError}</p>
+            ) : health ? (
+              <div className="scene-runtime-card__health-grid">
+                <div><span>版本</span><strong>{health.release?.app_version || '未绑定'}</strong></div>
+                <div><span>场景代次</span><strong>{health.scene?.generation?.slice(0, 12) || '未提供'}</strong></div>
+                <div><span>构件</span><strong>{health.release?.bound ? '已绑定' : '未绑定'}</strong></div>
+              </div>
+            ) : null}
+            {blockers.length > 0 && (
+              <p className="scene-runtime-card__alerts" role="status"><span>待处理提醒</span>{blockers.join(' · ')}</p>
+            )}
+            {readiness && blockers.length === 0 && readiness.ready === false && (
+              <p className="scene-runtime-card__alerts" role="status"><span>待处理提醒</span>验收状态尚未通过，请查看验收记录。</p>
+            )}
+          </section>
           <section className="scene-runtime-card__skills" aria-label="当前场景可执行 Skill">
             <header><span>可执行 Skill</span><strong>{Number.isFinite(Number(skills?.count)) ? `${skills?.count} 项` : '读取中'}</strong></header>
             {skillError ? (
