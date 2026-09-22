@@ -107,19 +107,24 @@ export interface ReadinessSnapshot {
 }
 
 export async function fetchSceneRuntime(signal?: AbortSignal): Promise<SceneRuntimeSnapshot> {
-  return operatorRequest('/api/v1/ui/runtime', { signal })
+  // All browser reads go through the same-origin Client proxy.  Calling the
+  // App's 7862 port directly works from curl but is not a browser-safe
+  // contract for the ecosystem endpoints (they intentionally do not expose
+  // CORS).  Keeping this at the API boundary also prevents individual pages
+  // from quietly bypassing the scene runtime contract.
+  return operatorRequest('/api/v1/ui/runtime', { signal }, true)
 }
 
 export async function fetchSkillRegistry(signal?: AbortSignal): Promise<SkillRegistrySnapshot> {
-  return operatorRequest('/api/v1/ecosystem/skills', { signal })
+  return operatorRequest('/api/v1/ecosystem/skills', { signal }, true)
 }
 
 export async function fetchEcosystemHealth(signal?: AbortSignal): Promise<EcosystemHealthSnapshot> {
-  return operatorRequest('/api/v1/ecosystem/health', { signal })
+  return operatorRequest('/api/v1/ecosystem/health', { signal }, true)
 }
 
 export async function fetchReadiness(signal?: AbortSignal): Promise<ReadinessSnapshot> {
-  return operatorRequest('/api/v1/demo-readiness', { signal })
+  return operatorRequest('/api/v1/demo-readiness', { signal }, true)
 }
 
 export interface SceneSummary {
@@ -130,9 +135,9 @@ export interface SceneSummary {
 }
 
 export function fetchScenes(signal?: AbortSignal) {
-  return operatorRequest<{ scenes: SceneSummary[] }>('/api/v1/ui/scenes', { signal })
+  return operatorRequest<{ scenes: SceneSummary[] }>('/api/v1/ui/scenes', { signal }, true)
 }
 
 export function activateScene(id: string) {
-  return operatorRequest(`/api/v1/scenes/${encodeURIComponent(id)}/activate`, { method: 'POST' })
+  return operatorRequest(`/api/v1/scenes/${encodeURIComponent(id)}/activate`, { method: 'POST' }, true)
 }

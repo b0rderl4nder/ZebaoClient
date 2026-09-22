@@ -268,7 +268,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .scene-runtime-card__metrics span { color: #7d766e; font-size: 11px; }
 .scene-runtime-card__metrics strong { overflow: hidden; color: #dcd4c9; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .scene-runtime-card__mounts, .scene-runtime-card__message { margin: 0; padding: 13px 22px; border-top: 1px solid #302d28; color: #b9b1a6; font-size: 12px; line-height: 1.55; }
-.scene-runtime-card__message { color: #d2a49f; background: #211312; }
+.scene-runtime-card__message { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #d2a49f; background: #211312; }
+.scene-runtime-card__message > div { min-width: 0; display: grid; gap: 3px; }
+.scene-runtime-card__message strong { color: #f0c2ba; font-size: 12px; font-weight: 650; }
+.scene-runtime-card__message span { overflow-wrap: anywhere; }
+.scene-runtime-card__message button { flex: 0 0 auto; min-height: 34px; padding: 0 11px; border: 1px solid #775048; border-radius: 8px; color: #f0c2ba; background: #2b1818; font-size: 11px; }
+.scene-runtime-card__message button:hover { border-color: #a26b5f; background: #361d1d; }
 .scene-runtime-card__health { border-top: 1px solid #302d28; }
 .scene-runtime-card__health > header { min-height: 48px; padding: 13px 22px 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .scene-runtime-card__health > header span { color: #b9b1a6; font-size: 11px; }
@@ -312,6 +317,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .dashboard-actions strong { color: #eee7dc; font-size: 15px; }
 .dashboard-actions span { color: #777168; font-size: 11px; }
 .dashboard-switch { display: none; margin-top: 22px; }
+
+@media(max-width: 600px) {
+  .scene-runtime-card__message { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .scene-runtime-card__message button { width: 100%; }
+}
 
 .embodied-control { padding: 32px 36px 72px; }
 .embodied-control__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid #302d28; }

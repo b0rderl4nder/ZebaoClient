@@ -59,6 +59,7 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
   const [error, setError] = useState('')
   const [skillError, setSkillError] = useState('')
   const [healthError, setHealthError] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (simulated) {
@@ -125,7 +126,7 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
       controller?.abort()
       window.clearInterval(timer)
     }
-  }, [simulated])
+  }, [simulated, refreshKey])
 
   const summary = useMemo(() => {
     const capabilityNames = (runtime?.capabilities || [])
@@ -164,7 +165,10 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
         <Link to="/dashboard/scenes">查看挂载 →</Link>
       </header>
       {error ? (
-        <p className="scene-runtime-card__message" role="status">场景运行时暂不可读：{error}</p>
+        <div className="scene-runtime-card__message" role="status">
+          <div><strong>场景运行时暂不可读</strong><span>{error}</span></div>
+          <button type="button" onClick={() => setRefreshKey(value => value + 1)}>重新读取</button>
+        </div>
       ) : (
         <>
           <div className="scene-runtime-card__metrics">
@@ -180,7 +184,10 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
           <section className="scene-runtime-card__health" aria-label="发布与健康">
             <header><span>发布与健康</span><strong>{health?.ok ? '运行态正常' : healthError ? '健康信息暂不可读' : '读取中'}</strong></header>
             {healthError ? (
-              <p className="scene-runtime-card__message" role="status">健康摘要暂不可读：{healthError}</p>
+              <div className="scene-runtime-card__message" role="status">
+                <div><strong>健康摘要暂不可读</strong><span>{healthError}</span></div>
+                <button type="button" onClick={() => setRefreshKey(value => value + 1)}>重新读取</button>
+              </div>
             ) : health ? (
               <div className="scene-runtime-card__health-grid">
                 <div><span>版本</span><strong>{health.release?.app_version || '未绑定'}</strong></div>
@@ -198,7 +205,10 @@ export default function SceneRuntimeCard({ simulated = false }: { simulated?: bo
           <section className="scene-runtime-card__skills" aria-label="当前场景可执行 Skill">
             <header><span>可执行 Skill</span><strong>{Number.isFinite(Number(skills?.count)) ? `${skills?.count} 项` : '读取中'}</strong></header>
             {skillError ? (
-              <p className="scene-runtime-card__message" role="status">Skill 契约暂不可读：{skillError}</p>
+              <div className="scene-runtime-card__message" role="status">
+                <div><strong>Skill 契约暂不可读</strong><span>{skillError}</span></div>
+                <button type="button" onClick={() => setRefreshKey(value => value + 1)}>重新读取</button>
+              </div>
             ) : visibleSkills.length ? (
               <div className="scene-runtime-card__skill-list">
                 {visibleSkills.map(skill => (

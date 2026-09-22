@@ -109,7 +109,12 @@ def allowed_scene_request(method: str, path: str) -> bool:
     if method == 'GET':
         return pathname == '/api/v1/ui/scene-templates' or bool(re.fullmatch(r'/api/v1/ui/scenes/[a-zA-Z0-9_-]+', pathname)) or bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+/revisions', pathname))
     if method == 'POST':
-        return pathname == '/api/v1/ui/scenes' or bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+/publish', pathname)) or bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+/revisions/[a-zA-Z0-9_-]+/restore', pathname))
+        return (
+            pathname == '/api/v1/ui/scenes'
+            or bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+/activate', pathname))
+            or bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+/publish', pathname))
+            or bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+/revisions/[a-zA-Z0-9_-]+/restore', pathname))
+        )
     return method in ('PUT', 'DELETE') and bool(re.fullmatch(r'/api/v1/scenes/[a-zA-Z0-9_-]+', pathname))
 
 

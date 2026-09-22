@@ -85,12 +85,14 @@ export default function AcceptanceWorkspace({ simulated = false }: { simulated?:
   const [busy, setBusy] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [unreadable, setUnreadable] = useState<string[]>([])
   const [notice, setNotice] = useState('')
 
   const read = useCallback(async () => {
     if (simulated) return
     setRefreshing(true)
     setError('')
+    setUnreadable([])
     const results = await Promise.allSettled([
       fetchReadiness(),
       fetchSceneRuntime(),
@@ -110,11 +112,14 @@ export default function AcceptanceWorkspace({ simulated = false }: { simulated?:
         return Object.fromEntries(acceptanceResult.value.stages.map(stage => [stage.id, false]))
       })
     }
-    const failed = results.find(item => item.status === 'rejected')
-    if (failed?.status === 'rejected' && results.every(item => item.status === 'rejected')) {
-      setError(failed.reason instanceof Error ? failed.reason.message : '验收快照暂不可读，请重试。')
-    } else if (failed?.status === 'rejected') {
-      setError('部分验收数据暂不可读；页面不会用缺失数据推断通过。')
+    const sourceLabels = ['自动门禁', '场景运行态', '健康摘要', 'Skill 契约', '历史验收']
+    const failedSources = results.flatMap((item, index) => item.status === 'rejected' ? [sourceLabels[index]] : [])
+    setUnreadable(failedSources)
+    if (failedSources.length === results.length) {
+      const first = results[0]
+      setError(first.status === 'rejected' && first.reason instanceof Error ? first.reason.message : '机器人应用暂时没有返回验收数据，请检查连接后重试。')
+    } else if (failedSources.length) {
+      setError(`以下数据暂不可读：${failedSources.join('、')}。页面不会用缺失数据推断通过。`)
     }
     setRefreshing(false)
   }, [simulated])
@@ -165,12 +170,18 @@ export default function AcceptanceWorkspace({ simulated = false }: { simulated?:
       <button type="button" disabled={refreshing || busy} onClick={() => void read()}>{refreshing ? '读取中' : '重新读取'}</button>
     </header>
     <div className="workspace-body">
-      {error && <p className="workspace-error" role="alert">{error}</p>}
+      {error && <div className="acceptance-alert acceptance-alert--error" role="alert"><div><strong>{unreadable.length === 5 ? '机器人应用暂不可达' : '部分实时数据不可读'}</strong><p>{error}</p><small>这表示证据还没有读取完整，不代表验收通过或设备已停止。</small></div><button type="button" disabled={refreshing || busy} onClick={() => void read()}>{refreshing ? '读取中' : '重新读取'}</button></div>}
       {notice && <p className="settings-notice" role="status">{notice}</p>}
+
+      <ol className="acceptance-flow" aria-label="验收流程">
+        <li className={readiness ? 'is-ready' : ''}><span>01</span><div><strong>运行检查</strong><small>运行构件、设备与场景快照</small></div></li>
+        <li className={checkedStages > 0 ? 'is-ready' : ''}><span>02</span><div><strong>真人步骤</strong><small>现场观察后逐项勾选</small></div></li>
+        <li className={latestRun ? 'is-ready' : ''}><span>03</span><div><strong>结果证据</strong><small>绑定代次后保存记录</small></div></li>
+      </ol>
 
       <section className="acceptance-hero" aria-label="验收总览">
         <div><span className="workspace-eyebrow">当前运行边界</span><h2>{runtime?.scene?.name || '场景未确认'}</h2><p>{runtime?.scene?.description || '只读取 SceneManager 的冻结快照，不回退到默认场景。'}</p></div>
-        <strong className={readiness?.ready ? 'is-pass' : 'is-pending'}>{readiness?.ready ? '验收已通过' : '等待真人证据'}</strong>
+        <span className={`acceptance-status ${readiness?.ready ? 'is-pass' : 'is-pending'}`}><i aria-hidden="true" />{readiness?.ready ? '自动门禁通过' : '等待真人证据'}</span>
       </section>
 
       <section className="acceptance-snapshot" aria-label="发布与场景快照">

@@ -161,12 +161,25 @@ class SceneProxyTests(unittest.TestCase):
         self.assertFalse(Upstream.calls)
 
     def test_native_voice_contracts_only(self):
-        for method, path in [('GET', '/api/v1/scenes'), ('GET', '/api/v1/ui/runtime'), ('GET', '/api/v1/ui/scenes'), ('GET', '/api/v1/settings/voice-activation'), ('PATCH', '/api/v1/settings/voice-activation'), ('PATCH', '/api/v1/scenes/voice-pipeline'), ('POST', '/api/v1/backend_config')]:
+        for method, path in [
+            ('GET', '/api/v1/scenes'),
+            ('GET', '/api/v1/ui/runtime'),
+            ('GET', '/api/v1/ui/scenes'),
+            ('GET', '/api/v1/ecosystem/skills'),
+            ('GET', '/api/v1/ecosystem/health'),
+            ('GET', '/api/v1/demo-readiness'),
+            ('GET', '/api/v1/settings/voice-activation'),
+            ('PATCH', '/api/v1/settings/voice-activation'),
+            ('PATCH', '/api/v1/scenes/voice-pipeline'),
+            ('POST', '/api/v1/backend_config'),
+            ('POST', '/api/v1/scenes/quiet/activate'),
+        ]:
             data = b'{}' if method != 'GET' else None
             self.assertEqual(self.request(path, method, data)[0], 200)
             self.assertEqual(Upstream.calls[-1], (method, path, data or b''))
         self.assertEqual(self.request('/api/v1/backend_config', 'GET')[0], 403)
         self.assertEqual(self.request('/api/v1/settings', 'PATCH', b'{}')[0], 403)
+        self.assertEqual(self.request('/api/v1/scenes/quiet/activate/extra', 'POST', b'{}')[0], 403)
 
     def test_device_settings_contracts_only(self):
         endpoints = {
