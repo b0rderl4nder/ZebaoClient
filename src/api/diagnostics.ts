@@ -75,6 +75,20 @@ export async function readAcceptance(signal?:AbortSignal):Promise<AcceptanceDocu
   return data
 }
 
+export interface AcceptanceRunPayload {
+  scene_generation: string
+  stages?: Record<string, boolean>
+  capability_results?: { capability_id: string; ok: boolean; status: string; provider: string }[]
+  device_results?: { device_id: string; operation: string; readback_ok: boolean; restored: boolean }[]
+  display_revision?: string
+  latency_ms?: Record<string, number>
+}
+
+/** Store operator-observed result codes; it never executes a device. */
+export async function recordAcceptanceRun(payload: AcceptanceRunPayload): Promise<{ ok: boolean; run: AcceptanceRun }> {
+  return request<{ ok: boolean; run: AcceptanceRun }>('/acceptance/runs', { method: 'POST', body: JSON.stringify(payload) })
+}
+
 /**
  * The acceptance page is intentionally read-only.  This combines the
  * release-bound run history with the current readiness projection so the

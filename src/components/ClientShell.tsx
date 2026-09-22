@@ -2,10 +2,11 @@ import { NavLink, Outlet } from 'react-router-dom'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: '概览', mark: '01', end: true },
-  { to: '/dashboard/scenes', label: '场景', mark: '02' },
-  { to: '/dashboard/foundation', label: '基础系统', mark: '03' },
-  { to: '/dashboard/control', label: '控制', mark: '04' },
-  { to: '/dashboard/apps', label: '应用', mark: '05' },
+  { to: '/dashboard/acceptance', label: '验收', mark: '02', kind: 'acceptance' },
+  { to: '/dashboard/scenes', label: '场景', mark: '03' },
+  { to: '/dashboard/foundation', label: '基础系统', mark: '04' },
+  { to: '/dashboard/control', label: '控制', mark: '05' },
+  { to: '/dashboard/apps', label: '应用', mark: '06' },
 ] as const
 
 export default function ClientShell({
@@ -26,7 +27,7 @@ export default function ClientShell({
         </div>
         <nav>
           {NAV_ITEMS.map(item => (
-            <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false} className={({ isActive }) => isActive ? 'is-active' : ''}>
+            <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false} data-nav-kind={'kind' in item ? item.kind : undefined} className={({ isActive }) => isActive ? 'is-active' : ''}>
               <span aria-hidden="true">{item.mark}</span><span>{item.label}</span>
             </NavLink>
           ))}
@@ -36,7 +37,7 @@ export default function ClientShell({
       <main className="client-shell__content"><Outlet /></main>
       <nav className="client-shell__mobile-nav" aria-label="移动端设备控制导航">
         {NAV_ITEMS.map(item => (
-          <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false} className={({ isActive }) => isActive ? 'is-active' : ''}>
+          <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false} data-nav-kind={'kind' in item ? item.kind : undefined} className={({ isActive }) => isActive ? 'is-active' : ''}>
             <span aria-hidden="true">{item.mark}</span><span>{item.label}</span>
           </NavLink>
         ))}

@@ -7,6 +7,7 @@ import DeviceDiscovery from '../features/discovery/DeviceDiscovery'
 import Dashboard from '../features/dashboard/Dashboard'
 import SceneRuntimeCard from '../features/dashboard/SceneRuntimeCard'
 import EmbodiedInteractionControl from '../features/embodied/EmbodiedInteractionControl'
+import AcceptanceWorkspace from '../features/acceptance/AcceptanceWorkspace'
 import { playSimulationPreset, SIMULATION_PRESETS } from '../api/simulation'
 
 describe('桌面控制端信息架构', () => {
@@ -22,8 +23,8 @@ describe('桌面控制端信息架构', () => {
     )
 
     const desktopNavigation = screen.getByLabelText('设备控制导航')
-    expect(desktopNavigation.querySelectorAll('nav a')).toHaveLength(5)
-    for (const name of ['概览', '场景', '基础系统', '控制', '应用']) {
+    expect(desktopNavigation.querySelectorAll('nav a')).toHaveLength(6)
+    for (const name of ['概览', '验收', '场景', '基础系统', '控制', '应用']) {
       expect(screen.getAllByText(name)).toHaveLength(2)
     }
     expect((await axe.run(document.body, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
@@ -123,6 +124,26 @@ describe('桌面控制端信息架构', () => {
     expect(screen.getByText(/CapabilityBroker/)).toBeInTheDocument()
     expect(screen.getByText('0.1.421')).toBeInTheDocument()
     expect(screen.getByText('可用空间低于建议余量')).toBeInTheDocument()
+    vi.unstubAllGlobals()
+  })
+
+  it('验收工作台显示当前场景、自动门禁和真人证据入口', async () => {
+    const request = vi.fn().mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input))
+      if (url.pathname.endsWith('/demo-readiness')) return Response.json({ ready: false, state: 'blocked', blockers: ['voice_turn_acceptance'], voice_mode: 'cloud_omni_native', gates: { field_network: true, voice_turn_acceptance: false } })
+      if (url.pathname.endsWith('/ui/runtime')) return Response.json({ ok: true, state: 'ready', scene: { id: 'quiet', name: '安静办公', generation: 'generation-123', description: '现场场景' }, capabilities: [{ id: 'office_iot', name: '办公室物联网' }], capability_count: 1, voice: { provider: 'aliyun_native_omni', label: '云端 Omni' } })
+      if (url.pathname.endsWith('/ecosystem/health')) return Response.json({ ok: true, release: { app_version: '0.1.423', git_commit: 'abcdef1234567890', bound: true } })
+      if (url.pathname.endsWith('/ecosystem/skills')) return Response.json({ ok: true, count: 2, skills: [] })
+      if (url.pathname.endsWith('/acceptance/runs')) return init?.method === 'POST' ? Response.json({ ok: true, run: { run_id: 'new', recorded_at: '2026-09-23', passed: false, scene: { id: 'quiet', generation: 'generation-123' }, release: { git_commit: 'abc', artifact_sha256: 'hash' }, voice_mode: 'cloud_omni_native', stages: {}, capability_results: [], device_results: [], display_revision: '', latency_ms: {} } }) : Response.json({ ok: true, count: 0, stages: [{ id: 'voice_entry', label: '完成唤醒或手机入口复核', kind: 'dialogue' }], runs: [] })
+      return Response.json({ ok: false }, { status: 404 })
+    })
+    vi.stubGlobal('fetch', request)
+    render(<MemoryRouter><AcceptanceWorkspace /></MemoryRouter>)
+    await waitFor(() => expect(screen.getByRole('heading', { name: '验收工作台' })).toBeInTheDocument())
+    expect(await screen.findByText('安静办公')).toBeInTheDocument()
+    expect(screen.getByText('自动门禁')).toBeInTheDocument()
+    expect(screen.getByText('真人验收步骤')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '保存本次验收记录' })).toBeEnabled()
     vi.unstubAllGlobals()
   })
 })

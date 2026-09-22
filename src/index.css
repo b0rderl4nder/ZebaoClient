@@ -186,6 +186,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .client-shell__sidebar nav a:hover { color: #fbf7ef; background: #201e1a; }
 .client-shell__sidebar nav a.is-active { color: #fbf7ef; border-color: #514126; background: #272117; }
 .client-shell__sidebar nav a.is-active > span:first-child { color: #e7a34b; }
+.client-shell__sidebar nav a[data-nav-kind="acceptance"] { border-color: rgba(231,163,75,.24); color: #eac088; background: rgba(231,163,75,.06); }
+.client-shell__sidebar nav a[data-nav-kind="acceptance"] > span:first-child { color: #e7a34b; }
+.client-shell__sidebar nav a[data-nav-kind="acceptance"]:hover, .client-shell__sidebar nav a[data-nav-kind="acceptance"].is-active { border-color: #80613c; background: #302519; }
 .client-shell__sidebar > button { min-height: 44px; margin-top: auto; border: 1px solid rgba(255,246,229,.1); border-radius: 12px; color: rgba(232,223,211,.56); background: rgba(255,255,255,.025); }
 .client-shell__sidebar > button:hover { color: #fbf7ef; border-color: rgba(231,163,75,.24); }
 .client-shell__content { grid-column: 2; min-width: 0; }
@@ -385,12 +388,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .client-shell__content { min-width: 0; }
   .client-shell__mobile-nav {
     position: fixed; z-index: 70; inset: auto 9px calc(9px + env(safe-area-inset-bottom)) 9px; min-height: 62px;
-    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 6px; border: 1px solid #39342e;
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; padding: 6px; border: 1px solid #39342e;
     border-radius: 18px; background: #1b1916f2; box-shadow: 0 18px 54px rgba(0,0,0,.42);
   }
   .client-shell__mobile-nav a { min-width: 0; min-height: 50px; display: grid; place-items: center; align-content: center; gap: 1px; border-radius: 14px; color: rgba(232,223,211,.45); text-decoration: none; font-size: 10px; }
   .client-shell__mobile-nav a > span:first-child { font-size: 16px; line-height: 1.1; }
   .client-shell__mobile-nav a.is-active { color: #e7a34b; background: rgba(231,163,75,.11); }
+  .client-shell__mobile-nav a[data-nav-kind="acceptance"] { color: #eac088; }
 }
 
 @media (max-width: 900px) {

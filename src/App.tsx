@@ -26,6 +26,7 @@ const PromptSettings = lazy(() => import('./features/foundation/PromptSettings')
 const OperationsLogs = lazy(() => import('./features/foundation/OperationsLogs'))
 const PipelineDiagnostics = lazy(() => import('./features/foundation/PipelineDiagnostics'))
 const AcceptanceRecords = lazy(() => import('./features/foundation/AcceptanceRecords'))
+const AcceptanceWorkspace = lazy(() => import('./features/acceptance/AcceptanceWorkspace'))
 const People = lazy(() => import('./features/people/People'))
 const PersonDetail = lazy(() => import('./features/people/PersonDetail'))
 const EmbodiedInteractionControl = lazy(() => import('./features/embodied/EmbodiedInteractionControl'))
@@ -75,6 +76,7 @@ export default function App() {
         <Route index element={<Page><Dashboard host={simulated ? '模拟操作界面' : robot?.host ?? ''} simulated={simulated} onSwitchDevice={handleSwitchDevice} /></Page>} />
         <Route path="control" element={<Page><Control simulated={simulated} /></Page>} />
         <Route path="scenes" element={<Page><Scenes simulated={simulated}/></Page>} />
+        <Route path="acceptance" element={<Page><AcceptanceWorkspace simulated={simulated}/></Page>} />
         <Route path="setup" element={<Navigate to="/dashboard/scenes" replace />} />
         <Route path="foundation" element={<Page><Foundation simulated={simulated}/></Page>} />
         <Route path="foundation/voice" element={<Page><VoiceSettings simulated={simulated}/></Page>} />

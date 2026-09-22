@@ -30,7 +30,9 @@ def allowed_scene_request(method: str, path: str) -> bool:
         return True
     if method in ('GET', 'PATCH') and re.fullmatch(r'/api/v1/settings/voice-connections/(local_omni|platform_ws|cloud_omni|aliyun_native_omni)', pathname):
         return True
-    if method == 'GET' and pathname in ('/api/v1/operations/logs', '/api/v1/acceptance/runs', '/api/v1/debug/diagnostic_snapshot'):
+    if method in ('GET', 'POST') and pathname == '/api/v1/acceptance/runs':
+        return True
+    if method == 'GET' and pathname in ('/api/v1/operations/logs', '/api/v1/debug/diagnostic_snapshot'):
         return True
     if method == 'DELETE' and path == '/api/v1/operations/logs?all_entries=true':
         return True

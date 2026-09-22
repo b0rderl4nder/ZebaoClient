@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { AppStatus, DaemonStatus } from '../../api/types'
 import { fetchDaemonStatus, restartDaemon, startDaemon, stopDaemon } from '../../api/daemon'
 import { getCurrentAppStatus } from '../../api/apps'
@@ -73,6 +74,10 @@ export default function Dashboard({ host, simulated = false }: { host: string; s
         <div><span>机器人控制</span><strong>{running ? '运行中' : '已停止'}</strong></div>
         <div><span>对话应用</span><strong>{appRunning ? '运行中' : '未运行'}</strong></div>
         {!simulated && <div className="dashboard-controls">{running ? <button onClick={() => void run('stop')} disabled={Boolean(busy)}>{busy === 'stop' ? '正在停止' : '停止'}</button> : <button className="is-primary" onClick={() => void run('start')} disabled={Boolean(busy)}>{busy === 'start' ? '正在启动' : '启动'}</button>}<button onClick={() => void run('restart')} disabled={Boolean(busy)}>{busy === 'restart' ? '正在重启' : '重启'}</button></div>}
+      </section>
+      <section className="dashboard-actions" aria-label="运行工作区">
+        <Link to="/dashboard/acceptance"><strong>验收工作台</strong><span>发布、场景代次、自动门禁与真人证据</span></Link>
+        <Link to="/dashboard/scenes"><strong>场景运行边界</strong><span>查看当前场景挂载的能力、知识库与展示目标</span></Link>
       </section>
       <SceneRuntimeCard simulated={simulated} />
       <EmbodiedInteractionCard simulated={simulated} />

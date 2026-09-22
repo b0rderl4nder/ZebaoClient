@@ -54,6 +54,13 @@ export async function operatorRequest<T>(path: string, init: RequestInit = {}, s
         prompt_variable_missing: '缺少必要模板变量，请保留编辑框下方列出的变量。',
         prompt_variable_invalid: '存在不支持的模板变量，请检查花括号中的名称。',
         prompt_template_invalid: '模板格式不正确，请检查变量花括号。',
+        acceptance_run_scene_generation_stale: '场景已发生变化，验收记录没有写入；请重新读取当前场景后再记录。',
+        acceptance_run_release_not_bound: '当前运行构件未绑定，不能记录验收证据。',
+        acceptance_run_invalid_scene_id: '当前场景标识无效，不能记录验收证据。',
+        acceptance_run_invalid_scene_generation: '当前场景代次无效，不能记录验收证据。',
+        acceptance_run_invalid_stage: '验收步骤标识无效，请重新读取验收目录。',
+        acceptance_run_invalid_capability_result: '能力证据字段不完整，请填写真实执行与回读结果。',
+        acceptance_run_invalid_device_result: '设备证据字段不完整，请填写真实回读和恢复结果。',
       }
       throw new Error(reasons[String(payload?.error || '')] || '机器人未能完成请求，请检查应用状态后重试。')
     }

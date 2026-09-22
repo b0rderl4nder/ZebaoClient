@@ -94,6 +94,7 @@ export interface EcosystemHealthSnapshot {
 export interface ReadinessSnapshot {
   ready?: boolean
   state?: string
+  voice_mode?: string
   blockers?: string[]
   gates?: Record<string, boolean>
   voice_turn_acceptance?: {
