@@ -7,6 +7,7 @@
 - 连接后直接进入概览，不再提供独立配置向导。旧 `/dashboard/setup` 重定向至场景页。
 
 - 场景工作区 `/dashboard/scenes`：从 App 的 `SceneRuntimeSnapshot` 展示真实挂载；切换后回读，未就绪时不制造默认场景。所有能力、知识源和展示目标均来自服务器。
+- 概览中的场景运行卡同时读取 `/api/v1/ecosystem/skills`，展示当前代次的 Skill 合同、设备回读要求和授权标记；Client 只读发现，不直接执行 Skill。
 - 基础系统 `/dashboard/foundation`：搜索并直接进入语音、呼吸、转向、身份、视觉、网络和工程设置。具身配置 `/dashboard/foundation/interaction` 使用同一 App API。
 - 场景页内直接新建、复制、编辑、删除，能力勾选、语音/交互与知识/展示挂载仍使用 App 原 API 保存并发布；不另建配置库。模板、归档、流程和能力高级参数保留原管理入口，`↗` 表示打开原管理页。基础设置改为紧凑列表，工程工具默认折叠。
 - `/dashboard/control?tab=interaction` 自动跳转至基础系统；动作、姿态、应用与仿真地址继续兼容。新版导航为概览、场景、基础系统、控制、应用。

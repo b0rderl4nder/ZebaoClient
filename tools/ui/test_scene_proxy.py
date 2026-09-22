@@ -42,6 +42,9 @@ class QuietHandler(server.SPARequestHandler):
 class EmbodiedConfigurationBoundary(unittest.TestCase):
     def test_policy_editor_has_no_scene_execution_shortcuts(self):
         self.assertTrue(server.allowed_scene_request('GET', '/api/v1/ui/interaction-policies'))
+        self.assertTrue(server.allowed_scene_request('GET', '/api/v1/ecosystem/skills'))
+        self.assertTrue(server.allowed_scene_request('GET', '/api/v1/ecosystem/health'))
+        self.assertFalse(server.allowed_scene_request('POST', '/api/v1/ecosystem/skills'))
         for method in ('PUT', 'DELETE'):
             self.assertTrue(server.allowed_scene_request(method, '/api/v1/interaction-policies/custom_rule'))
         self.assertFalse(server.allowed_scene_request('POST', '/api/v1/interaction-policies/custom_rule'))

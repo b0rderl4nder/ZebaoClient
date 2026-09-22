@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import axe from 'axe-core'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import ClientShell from '../components/ClientShell'
 import DeviceDiscovery from '../features/discovery/DeviceDiscovery'
 import Dashboard from '../features/dashboard/Dashboard'
+import SceneRuntimeCard from '../features/dashboard/SceneRuntimeCard'
 import EmbodiedInteractionControl from '../features/embodied/EmbodiedInteractionControl'
 import { playSimulationPreset, SIMULATION_PRESETS } from '../api/simulation'
 
@@ -67,6 +68,50 @@ describe('桌面控制端信息架构', () => {
     expect(container.textContent).toContain('预览模式未连接机器人，不显示虚构的场景或能力。')
     expect(container.textContent).not.toMatch(/默认场景|普通对话场景/)
     expect((await axe.run(container, { rules: { 'color-contrast': { enabled: false } } })).violations).toEqual([])
+  })
+
+  it('在同一运行快照旁展示 Skill 合同，不把 Client 变成执行入口', async () => {
+    const request = vi.fn().mockImplementation(async (input: RequestInfo | URL) => {
+      const path = new URL(String(input)).pathname
+      if (path.endsWith('/ui/runtime')) {
+        return Response.json({
+          ok: true,
+          state: 'ready',
+          scene: { id: 'quiet', name: '安静办公', generation: 'scene-generation' },
+          capabilities: [{ id: 'office_iot', name: '办公室物联网' }],
+          capability_count: 1,
+          voice: { provider: 'aliyun_native_omni', label: '云端 Omni' },
+          interaction: { id: 'wake', name: '唤醒后连续对话' },
+        })
+      }
+      if (path.endsWith('/ecosystem/skills')) {
+        return Response.json({
+          ok: true,
+          generation: 'skill-generation',
+          count: 1,
+          execution_boundary: 'CapabilityBroker',
+          skills: [{
+            skill_id: 'control_home_assistant',
+            tool_name: 'control_home_assistant',
+            title: '控制物联网',
+            result_contract: 'verified_device_result',
+            requires_identity_authorization: true,
+          }],
+        })
+      }
+      return Response.json({ ok: false }, { status: 404 })
+    })
+    vi.stubGlobal('fetch', request)
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <SceneRuntimeCard />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(screen.getByText('控制物联网')).toBeInTheDocument())
+    expect(screen.getByText('设备回读')).toBeInTheDocument()
+    expect(screen.getByText('需授权')).toBeInTheDocument()
+    expect(screen.getByText(/CapabilityBroker/)).toBeInTheDocument()
+    vi.unstubAllGlobals()
   })
 })
 

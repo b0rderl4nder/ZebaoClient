@@ -53,7 +53,11 @@ def allowed_scene_request(method: str, path: str) -> bool:
     if method == 'POST' and re.fullmatch(r'/api/v1/capabilities/[a-zA-Z0-9_-]+/restore', pathname):
         return True
     voice_endpoints = {
-        'GET': {'/api/v1/ui/scenes', '/api/v1/ui/runtime', '/api/v1/scenes', '/api/v1/settings/voice-activation'},
+        'GET': {
+            '/api/v1/ui/scenes', '/api/v1/ui/runtime', '/api/v1/scenes',
+            '/api/v1/settings/voice-activation', '/api/v1/ecosystem/skills',
+            '/api/v1/ecosystem/health',
+        },
         'PATCH': {'/api/v1/scenes/voice-pipeline', '/api/v1/settings/voice-activation'},
         'POST': {'/api/v1/backend_config'},
     }

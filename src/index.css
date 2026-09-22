@@ -266,6 +266,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .scene-runtime-card__metrics strong { overflow: hidden; color: #dcd4c9; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .scene-runtime-card__mounts, .scene-runtime-card__message { margin: 0; padding: 13px 22px; border-top: 1px solid #302d28; color: #b9b1a6; font-size: 12px; line-height: 1.55; }
 .scene-runtime-card__message { color: #d2a49f; background: #211312; }
+.scene-runtime-card__skills { border-top: 1px solid #302d28; }
+.scene-runtime-card__skills > header { min-height: 48px; padding: 13px 22px 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.scene-runtime-card__skills > header span { color: #b9b1a6; font-size: 11px; }
+.scene-runtime-card__skills > header strong { color: #dcd4c9; font-size: 12px; font-weight: 600; }
+.scene-runtime-card__skill-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 22px 14px; }
+.scene-runtime-card__skill-list article { min-width: 0; padding: 10px 11px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; border: 1px solid #34312c; border-radius: 9px; background: #12110f; }
+.scene-runtime-card__skill-list article > div { min-width: 0; display: grid; gap: 3px; }
+.scene-runtime-card__skill-list article strong { overflow: hidden; color: #e4ddd2; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.scene-runtime-card__skill-list article small { overflow: hidden; color: #7f786f; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.scene-runtime-card__skill-list article > span, .scene-runtime-card__skill-list article > em { align-self: start; padding: 3px 5px; border-radius: 5px; color: #e7bb7a; background: #2a2117; font-size: 9px; font-style: normal; white-space: nowrap; }
+.scene-runtime-card__skill-list article > em { grid-column: 1 / -1; justify-self: start; color: #b8cda9; background: #1b2719; }
+.scene-runtime-card__generation { display: block; padding: 0 22px 14px; overflow: hidden; color: #756e66; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .embodied-card { margin-top: 18px; overflow: hidden; border: 1px solid #34312c; border-radius: 16px; background: #161512; }
 .embodied-card__header { min-height: 74px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid #302d28; }
 .embodied-card__header > div { display: grid; gap: 4px; }
@@ -392,6 +404,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .scene-runtime-card__metrics { grid-template-columns: 1fr; }
   .scene-runtime-card__metrics > div { min-height: 58px; border-right: 0; border-bottom: 1px solid #302d28; }
   .scene-runtime-card__metrics > div:last-child { border-bottom: 0; }
+  .scene-runtime-card__skill-list { grid-template-columns: 1fr; }
   .embodied-card__metrics { grid-template-columns: 1fr; }
   .embodied-card__metrics > div { min-height: 58px; border-right: 0; border-bottom: 1px solid #302d28; }
   .embodied-card__metrics > div:last-child { border-bottom: 0; }
